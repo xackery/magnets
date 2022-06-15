@@ -1,4 +1,4 @@
-package npc
+package player
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/xackery/magnets/library"
 )
 
-type Npc struct {
+type Player struct {
 	hid        string
 	entityID   uint
 	layer      *aseprite.Layer
@@ -38,7 +38,7 @@ type animation struct {
 	isPingPongToggle bool
 }
 
-func New(spriteName string, layerName string, key int, anchor int, xOffset float32, yOffset float32) (*Npc, error) {
+func New(spriteName string, layerName string, key int, anchor int, xOffset float32, yOffset float32) (*Player, error) {
 
 	name := "base"
 	layer, err := library.Layer(spriteName, layerName)
@@ -49,11 +49,9 @@ func New(spriteName string, layerName string, key int, anchor int, xOffset float
 		return nil, fmt.Errorf("no cells found on layer %s", name)
 	}
 
-	n := &Npc{
+	n := &Player{
 		spriteName: spriteName,
 		layerName:  layerName,
-		hp:         1,
-		maxHP:      1,
 		key:        key,
 		anchor:     anchor,
 		xOffset:    xOffset,
@@ -69,7 +67,7 @@ func New(spriteName string, layerName string, key int, anchor int, xOffset float
 		return nil, fmt.Errorf("SetAnimation %s: %w", "left", err)
 	}
 
-	npcs = append(npcs, n)
+	players = append(players, n)
 	err = entity.Register(n)
 	if err != nil {
 		return nil, fmt.Errorf("entity.Register: %w", err)
@@ -77,34 +75,33 @@ func New(spriteName string, layerName string, key int, anchor int, xOffset float
 	return n, nil
 }
 
-func (n *Npc) IsHit(x, y float32) bool {
+func (n *Player) IsHit(x, y float32) bool {
 	if n.IsDead() {
 		return false
 	}
-	//fmt.Println(x, y, "vs", n.x, n.y, n.layer.SpriteWidth, n.layer.SpriteHeight)
-	if n.x-(float32(n.layer.SpriteWidth)/2) > float32(x) {
+	if n.x > float32(x) {
 		return false
 	}
-	if n.x+(float32(n.layer.SpriteWidth)/2) < float32(x) {
+	if n.x+float32(n.layer.SpriteWidth) < float32(x) {
 		return false
 	}
-	if n.y-float32(n.layer.SpriteHeight/2) > float32(y) {
+	if n.y > float32(y) {
 		return false
 	}
-	if n.y+float32(n.layer.SpriteHeight/2) < float32(y) {
+	if n.y+float32(n.layer.SpriteHeight) < float32(y) {
 		return false
 	}
 	return true
 	//return s.image.At(x-s.x, y-s.y).(color.RGBA).A > 0
 }
 
-func (n *Npc) SetOffset(x, y float32) {
+func (n *Player) SetOffset(x, y float32) {
 	n.xOffset = x
 	n.yOffset = y
 	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
 }
 
-func (n *Npc) Draw(screen *ebiten.Image) error {
+func (n *Player) Draw(screen *ebiten.Image) error {
 	n.animationStep()
 	if len(n.layer.Cells) <= int(n.animation.index) {
 		return fmt.Errorf("animationIndex %d is out of bounds for body cells %d", n.animation.index, len(n.layer.Cells))
@@ -159,8 +156,8 @@ func (n *Npc) Draw(screen *ebiten.Image) error {
 	return nil
 }
 
-// SetAnimation sets the animation of the npc
-func (n *Npc) SetAnimation(name string) error {
+// SetAnimation sets the animation of the player
+func (n *Player) SetAnimation(name string) error {
 	name = strings.ToLower(name)
 	tag, err := library.Tag(n.spriteName, name)
 	if err != nil {
@@ -171,7 +168,7 @@ func (n *Npc) SetAnimation(name string) error {
 	return nil
 }
 
-func (n *Npc) animationStep() {
+func (n *Player) animationStep() {
 	if n.IsDead() {
 		return
 	}
@@ -212,19 +209,19 @@ func (n *Npc) animationStep() {
 	n.animation.delay = time.Now().Add(time.Duration(c.Duration) * time.Millisecond)
 }
 
-func (n *Npc) SetPosition(x, y float32) {
+func (n *Player) SetPosition(x, y float32) {
 	n.x, n.y = x, y
 }
 
-func (n *Npc) Position() (float32, float32) {
+func (n *Player) Position() (float32, float32) {
 	return n.x, n.y
 }
 
-func (n *Npc) HID() string {
+func (n *Player) HID() string {
 	return n.hid
 }
 
-func (n *Npc) Damage(damage int) bool {
+func (n *Player) Damage(damage int) bool {
 	n.hp -= damage
 	if n.hp < 1 {
 		n.hp = 0
@@ -233,26 +230,26 @@ func (n *Npc) Damage(damage int) bool {
 	return false
 }
 
-func (n *Npc) IsDead() bool {
+func (n *Player) IsDead() bool {
 	return n.hp < 1
 }
 
-func (n *Npc) EntityID() uint {
+func (n *Player) EntityID() uint {
 	return n.entityID
 }
 
-func (n *Npc) SWidth() int {
+func (n *Player) SWidth() int {
 	return int(n.layer.SpriteWidth * uint16(global.ScreenScaleX()))
 }
 
-func (n *Npc) SHeight() int {
+func (n *Player) SHeight() int {
 	return int(n.layer.SpriteHeight * uint16(global.ScreenScaleY()))
 }
 
-func (n *Npc) AnimationAttack() error {
+func (n *Player) AnimationAttack() error {
 	return nil
 }
 
-func (n *Npc) AnimationGotHit() error {
+func (n *Player) AnimationGotHit() error {
 	return nil
 }

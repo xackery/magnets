@@ -9,10 +9,12 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/xackery/magnets/bullet"
 	"github.com/xackery/magnets/font"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/npc"
+	"github.com/xackery/magnets/player"
 	"golang.org/x/image/font/gofont/goregular"
 )
 
@@ -31,6 +33,7 @@ type Game struct {
 	ctx              context.Context
 	cancel           context.CancelFunc
 	resolutionChange time.Time
+	bulletTimer      *time.Ticker
 }
 
 // New creates a new game instance
@@ -74,11 +77,17 @@ func New(ctx context.Context, host string) (*Game, error) {
 		}
 	}
 
-	n, err := npc.New("heart", "default", 0, global.AnchorTopLeft, 30, 30)
+	_, err = npc.New("heart", "default", 0, global.AnchorTopLeft, 250, 30)
 	if err != nil {
 		return nil, fmt.Errorf("npc new heart: %w", err)
 	}
-	fmt.Println("created", n)
+	_, err = player.New("player", "default", 0, global.AnchorTopLeft, 120, 30)
+	if err != nil {
+		return nil, fmt.Errorf("player new player: %w", err)
+	}
+
+	bullet.New(bullet.BulletPlain, 0, global.AnchorTopLeft, 150, 60)
+	g.bulletTimer = time.NewTicker(250 * time.Millisecond)
 
 	Instance = g
 	return g, nil
@@ -90,7 +99,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	//update game
 	x, y := ebiten.CursorPosition()
 
+	/*select {
+	case <-g.bulletTimer.C:
+		_, err := bullet.New(bullet.BulletPlain, 0, global.AnchorTopLeft, 150, 30)
+		if err != nil {
+			fmt.Println("bullet creation failed", err)
+		}
+	default:
+	}*/
 	npc.Draw(screen)
+	bullet.Draw(screen)
+	player.Draw(screen)
 
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f, Position: %d, %d", ebiten.CurrentTPS(), x, y), 0, global.ScreenHeight()-14)
 
@@ -109,5 +128,7 @@ func (g *Game) Update() error {
 		g.resolutionChange = time.Now().Add(100 * time.Hour)
 		//ebiten.SetWindowSize(640, 480)
 	}
+
+	bullet.Update()
 	return nil
 }

@@ -12,7 +12,7 @@ const (
 	AnchorLeft
 )
 
-func AnchorPosition(anchor, xOffset, yOffset int) (int, int) {
+func AnchorPosition(anchor int, xOffset, yOffset float32) (float32, float32) {
 	switch anchor {
 	case AnchorNone:
 		return xOffset, yOffset
@@ -21,15 +21,15 @@ func AnchorPosition(anchor, xOffset, yOffset int) (int, int) {
 	case AnchorTop:
 		return xOffset, 0
 	case AnchorTopRight:
-		return ScreenWidth() + xOffset, yOffset
+		return float32(ScreenWidth()) + xOffset, yOffset
 	case AnchorRight:
-		return ScreenWidth() + xOffset, yOffset
+		return float32(ScreenWidth()) + xOffset, yOffset
 	case AnchorBottomRight:
-		return ScreenWidth() + xOffset, ScreenHeight() + yOffset
+		return float32(ScreenWidth()) + xOffset, float32(ScreenHeight()) + yOffset
 	case AnchorBottom:
-		return xOffset, ScreenHeight() + yOffset
+		return xOffset, float32(ScreenHeight()) + yOffset
 	case AnchorBottomLeft:
-		return xOffset, ScreenHeight() + yOffset
+		return xOffset, float32(ScreenHeight()) + yOffset
 	}
 	return xOffset, yOffset
 }

@@ -1,4 +1,4 @@
-package npc
+package player
 
 import (
 	"fmt"
@@ -8,18 +8,18 @@ import (
 )
 
 var (
-	npcs []*Npc
+	players []*Player
 )
 
 func Init() {
 	global.SubscribeOnResolutionChange(onResolutionChange)
 }
 
-func MoveToFront(npc *Npc) {
+func MoveToFront(player *Player) {
 	index := -1
 	isFound := false
-	for i, it := range npcs {
-		if npc != it {
+	for i, it := range players {
+		if player != it {
 			continue
 		}
 		index = i
@@ -30,12 +30,12 @@ func MoveToFront(npc *Npc) {
 		return
 	}
 
-	npcs = append(npcs[:index], npcs[index+1:]...)
-	npcs = append(npcs, npc)
+	players = append(players[:index], players[index+1:]...)
+	players = append(players, player)
 }
 
-func At(x, y float32) *Npc {
-	for _, p := range npcs {
+func At(x, y float32) *Player {
+	for _, p := range players {
 		if !p.IsHit(x, y) {
 			continue
 		}
@@ -46,26 +46,18 @@ func At(x, y float32) *Npc {
 
 func Draw(screen *ebiten.Image) error {
 	var err error
-	isCleanupNeeded := false
-	for _, p := range npcs {
-		if p.IsDead() {
-			isCleanupNeeded = true
-		}
+	for _, p := range players {
 		err = p.Draw(screen)
 		if err != nil {
 			return fmt.Errorf("draw: %w", err)
 		}
 	}
 
-	if isCleanupNeeded {
-		cleanupDead()
-	}
-
 	return nil
 }
 
-func Key(index int) *Npc {
-	for i, n := range npcs {
+func Key(index int) *Player {
+	for i, n := range players {
 		if i+1 == index {
 			return n
 		}
@@ -74,17 +66,17 @@ func Key(index int) *Npc {
 }
 
 func onResolutionChange() {
-	for _, n := range npcs {
+	for _, n := range players {
 		n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
 	}
 }
 
-func Npcs() []*Npc {
-	return npcs
+func Players() []*Player {
+	return players
 }
 
-func HID(hid string) *Npc {
-	for _, n := range npcs {
+func HID(hid string) *Player {
+	for _, n := range players {
 		if n.HID() == hid {
 			return n
 		}
@@ -93,17 +85,5 @@ func HID(hid string) *Npc {
 }
 
 func Clear() {
-	npcs = []*Npc{}
-}
-
-func cleanupDead() {
-	newNpcs := []*Npc{}
-
-	for _, p := range npcs {
-		if p.IsDead() {
-			continue
-		}
-		newNpcs = append(newNpcs, p)
-	}
-	npcs = newNpcs
+	players = []*Player{}
 }
