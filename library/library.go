@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -12,9 +13,9 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
-	"github.com/markbates/pkger"
 	"github.com/rs/zerolog/log"
 	"github.com/xackery/aseprite"
+	"github.com/xackery/magnets/art"
 	"github.com/xackery/magnets/global"
 )
 
@@ -144,22 +145,19 @@ func SetWebAssetPath(path string) {
 
 func ReadFile(assetName string) (assetReader, error) {
 	if runtime.GOOS != "js" {
-		f, err := pkger.Open(fmt.Sprintf("/assets/%s", assetName))
+		data, err := os.ReadFile(fmt.Sprintf("art/%s", assetName))
 		if err != nil {
-			return nil, fmt.Errorf("asset open: %w", err)
+			data, err = art.Art.ReadFile(assetName)
+			if err != nil {
+				return nil, fmt.Errorf("readFile %s: %w", assetName, err)
+			}
 		}
-		defer f.Close()
-		buf := &bytes.Buffer{}
-		_, err = io.Copy(buf, f)
-		if err != nil {
-			return nil, fmt.Errorf("copy asset: %w", err)
-		}
-		r := bytes.NewReader(buf.Bytes())
+		r := bytes.NewReader(data)
 		return r, nil
 	}
-	resp, err := http.Get(fmt.Sprintf("%s/assets/%s", webAssetPath, assetName))
+	resp, err := http.Get(fmt.Sprintf("%s/art/%s", webAssetPath, assetName))
 	if err != nil {
-		return nil, fmt.Errorf("asset get: %w", err)
+		return nil, fmt.Errorf("art get: %w", err)
 	}
 	defer resp.Body.Close()
 	buf := &bytes.Buffer{}

@@ -256,3 +256,11 @@ func (n *Npc) AnimationAttack() error {
 func (n *Npc) AnimationGotHit() error {
 	return nil
 }
+
+func (n *Npc) X() float32 {
+	return n.x
+}
+
+func (n *Npc) Y() float32 {
+	return n.y
+}

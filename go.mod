@@ -6,7 +6,6 @@ require (
 	github.com/goki/freetype v0.0.0-20220119013949-7a161fd3728c
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/hajimehoshi/ebiten/v2 v2.3.4
-	github.com/markbates/pkger v0.17.1
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.27.0
 	github.com/xackery/aseprite v0.2.9
@@ -16,7 +15,6 @@ require (
 
 require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20220320163800-277f93cfa958 // indirect
-	github.com/gobuffalo/here v0.6.0 // indirect
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/hajimehoshi/oto/v2 v2.1.0 // indirect
 	github.com/jezek/xgb v1.0.0 // indirect

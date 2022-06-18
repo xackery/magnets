@@ -5,5 +5,6 @@ var (
 		"heart.aseprite",
 		"player.aseprite",
 		"bullet.aseprite",
+		"item.aseprite",
 	}
 )

@@ -87,3 +87,17 @@ func HID(hid string) *Player {
 func Clear() {
 	players = []*Player{}
 }
+
+func X() float32 {
+	if len(players) == 0 {
+		return 0
+	}
+	return players[0].x
+}
+
+func Y() float32 {
+	if len(players) == 0 {
+		return 0
+	}
+	return players[0].y
+}

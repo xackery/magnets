@@ -13,21 +13,28 @@ import (
 )
 
 type Bullet struct {
-	hid        string
-	entityID   uint
-	layer      *aseprite.Layer
-	image      *ebiten.Image
-	damage     int
-	anchor     int
-	spriteName string
-	layerName  string
-	x          float32
-	y          float32
-	key        int
-	xOffset    float32
-	yOffset    float32
-	animation  animation
-	isDead     bool
+	hid          string
+	entityID     uint
+	layer        *aseprite.Layer
+	image        *ebiten.Image
+	behaviorType int
+	direction    int
+	damage       int
+	anchor       int
+	spriteName   string
+	layerName    string
+	x            float32
+	y            float32
+	xOffset      float32
+	yOffset      float32
+	spawnX       float32
+	spawnY       float32
+	player       entity.Entiter
+	distance     float32 //distance an object should travel to
+	animation    animation
+	isDead       bool
+	isReturning  bool // For behaviors that go to and fro, this is the returning flag
+	moveSpeed    float32
 }
 
 type animation struct {
@@ -37,14 +44,9 @@ type animation struct {
 	isPingPongToggle bool
 }
 
-func New(bulletType int, key int, anchor int, xOffset float32, yOffset float32) (*Bullet, error) {
-
-	bType, ok := bulletTypes[bulletType]
-	if !ok {
-		return nil, fmt.Errorf("bullet of type %d not found", bulletType)
-	}
+func New(b *BulletData, player entity.Entiter, direction int, anchor int, xOffset float32, yOffset float32) (*Bullet, error) {
 	name := "base"
-	layer, err := library.Layer(bType.spriteName, bType.layerName)
+	layer, err := library.Layer(b.SpriteName, b.LayerName)
 	if err != nil {
 		return nil, fmt.Errorf("library.Layer: %w", err)
 	}
@@ -53,16 +55,22 @@ func New(bulletType int, key int, anchor int, xOffset float32, yOffset float32) 
 	}
 
 	n := &Bullet{
-		spriteName: bType.spriteName,
-		layerName:  bType.layerName,
-		damage:     bType.damage,
-		key:        key,
-		anchor:     anchor,
-		xOffset:    xOffset,
-		yOffset:    yOffset,
-		layer:      layer,
-		entityID:   entity.NextEntityID(),
-		image:      layer.Cells[0].EbitenImage,
+		damage:       b.Damage,
+		player:       player,
+		spriteName:   b.SpriteName,
+		layerName:    b.LayerName,
+		direction:    direction,
+		behaviorType: b.BehaviorType,
+		anchor:       anchor,
+		xOffset:      xOffset,
+		yOffset:      yOffset,
+		layer:        layer,
+		entityID:     entity.NextEntityID(),
+		image:        layer.Cells[0].EbitenImage,
+		spawnX:       xOffset,
+		spawnY:       yOffset,
+		distance:     b.Distance,
+		moveSpeed:    b.MoveSpeed,
 	}
 
 	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
@@ -112,8 +120,7 @@ func (n *Bullet) Draw(screen *ebiten.Image) error {
 	}
 	c := n.layer.Cells[int(n.animation.index)]
 
-	n.x += 0.5
-
+	n.bulletMove()
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(-float64(n.layer.SpriteWidth/2), -float64(n.layer.SpriteHeight/2))
 	op.GeoM.Translate(float64(c.PositionX), float64(c.PositionY))
@@ -245,4 +252,12 @@ func (n *Bullet) AnimationAttack() error {
 
 func (n *Bullet) AnimationGotHit() error {
 	return nil
+}
+
+func (n *Bullet) X() float32 {
+	return n.x
+}
+
+func (n *Bullet) Y() float32 {
+	return n.y
 }

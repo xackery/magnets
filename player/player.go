@@ -9,7 +9,9 @@ import (
 	"github.com/xackery/aseprite"
 	"github.com/xackery/magnets/entity"
 	"github.com/xackery/magnets/global"
+	"github.com/xackery/magnets/input"
 	"github.com/xackery/magnets/library"
+	"github.com/xackery/magnets/weapon"
 )
 
 type Player struct {
@@ -29,6 +31,8 @@ type Player struct {
 	yOffset    float32
 	animation  animation
 	nameTag    string
+	direction  int
+	weapons    map[int]*weapon.Weapon
 }
 
 type animation struct {
@@ -53,12 +57,16 @@ func New(spriteName string, layerName string, key int, anchor int, xOffset float
 		spriteName: spriteName,
 		layerName:  layerName,
 		key:        key,
+		hp:         1,
+		maxHP:      1,
+		direction:  global.DirectionRight,
 		anchor:     anchor,
 		xOffset:    xOffset,
 		yOffset:    yOffset,
 		layer:      layer,
 		entityID:   entity.NextEntityID(),
 		image:      layer.Cells[0].EbitenImage,
+		weapons:    make(map[int]*weapon.Weapon),
 	}
 
 	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
@@ -102,7 +110,27 @@ func (n *Player) SetOffset(x, y float32) {
 }
 
 func (n *Player) Draw(screen *ebiten.Image) error {
-	n.animationStep()
+
+	isMoving := input.IsPlayerMoving()
+	n.direction = input.PlayerDirection
+	moveSpeed := float32(0.5)
+	if isMoving {
+		n.animationStep()
+		if global.IsDirectionLeft(n.direction) {
+			n.x -= moveSpeed
+		}
+		if global.IsDirectionRight(n.direction) {
+			n.x += moveSpeed
+		}
+
+		if global.IsDirectionDown(n.direction) {
+			n.y += moveSpeed
+		}
+
+		if global.IsDirectionUp(n.direction) {
+			n.y -= moveSpeed
+		}
+	}
 	if len(n.layer.Cells) <= int(n.animation.index) {
 		return fmt.Errorf("animationIndex %d is out of bounds for body cells %d", n.animation.index, len(n.layer.Cells))
 	}
@@ -112,6 +140,11 @@ func (n *Player) Draw(screen *ebiten.Image) error {
 	op.GeoM.Translate(-float64(n.layer.SpriteWidth/2), -float64(n.layer.SpriteHeight/2))
 	op.GeoM.Translate(float64(c.PositionX), float64(c.PositionY))
 	op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
+	if global.IsDirectionLeft(int(n.direction)) {
+		op.GeoM.Scale(-1, 1)
+		//op.GeoM.Translate(float64(n.layer.SpriteWidth), 0)
+	}
+
 	op.GeoM.Translate(float64(n.x), float64(n.y))
 
 	if n.IsDead() {
@@ -121,7 +154,7 @@ func (n *Player) Draw(screen *ebiten.Image) error {
 	} else {
 		op.ColorM.Scale(1, 1, 1, 1)
 	}
-
+	n.weaponDraw(screen)
 	//duplication spell effect?
 	/*for j := -128; j <= 128; j += 32 {
 		//for i := -1; i <= 1; i++ {
@@ -252,4 +285,12 @@ func (n *Player) AnimationAttack() error {
 
 func (n *Player) AnimationGotHit() error {
 	return nil
+}
+
+func (n *Player) X() float32 {
+	return n.x
+}
+
+func (n *Player) Y() float32 {
+	return n.y
 }
