@@ -2,11 +2,13 @@ package bullet
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/xackery/aseprite"
+	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/entity"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/library"
@@ -20,21 +22,18 @@ type Bullet struct {
 	behaviorType int
 	direction    int
 	damage       int
-	anchor       int
 	spriteName   string
 	layerName    string
-	x            float32
-	y            float32
-	xOffset      float32
-	yOffset      float32
-	spawnX       float32
-	spawnY       float32
+	x            float64
+	y            float64
+	spawnX       float64
+	spawnY       float64
 	player       entity.Entiter
-	distance     float32 //distance an object should travel to
+	distance     float64 //distance an object should travel to
 	animation    animation
 	isDead       bool
 	isReturning  bool // For behaviors that go to and fro, this is the returning flag
-	moveSpeed    float32
+	moveSpeed    float64
 }
 
 type animation struct {
@@ -44,7 +43,7 @@ type animation struct {
 	isPingPongToggle bool
 }
 
-func New(b *BulletData, player entity.Entiter, direction int, anchor int, xOffset float32, yOffset float32) (*Bullet, error) {
+func New(b *BulletData, player entity.Entiter, direction int) (*Bullet, error) {
 	name := "base"
 	layer, err := library.Layer(b.SpriteName, b.LayerName)
 	if err != nil {
@@ -61,22 +60,20 @@ func New(b *BulletData, player entity.Entiter, direction int, anchor int, xOffse
 		layerName:    b.LayerName,
 		direction:    direction,
 		behaviorType: b.BehaviorType,
-		anchor:       anchor,
-		xOffset:      xOffset,
-		yOffset:      yOffset,
 		layer:        layer,
 		entityID:     entity.NextEntityID(),
 		image:        layer.Cells[0].EbitenImage,
-		spawnX:       xOffset,
-		spawnY:       yOffset,
 		distance:     b.Distance,
 		moveSpeed:    b.MoveSpeed,
 	}
+	n.x = player.X() // + float64(player.SWidth()/4)
+	n.y = player.Y() // + float64(player.SHeight()/4)
+	n.spawnX = n.x
+	n.spawnY = n.y
 
-	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
-	err = n.SetAnimation("left")
+	err = n.SetAnimation("walk")
 	if err != nil {
-		return nil, fmt.Errorf("SetAnimation %s: %w", "left", err)
+		return nil, fmt.Errorf("SetAnimation %s: %w", "walk", err)
 	}
 
 	bullets = append(bullets, n)
@@ -87,30 +84,11 @@ func New(b *BulletData, player entity.Entiter, direction int, anchor int, xOffse
 	return n, nil
 }
 
-func (n *Bullet) IsHit(x, y float32) bool {
+func (n *Bullet) IsHit(x, y float64) bool {
 	if n.IsDead() {
 		return false
 	}
-	if n.x > float32(x) {
-		return false
-	}
-	if n.x+float32(n.layer.SpriteWidth) < float32(x) {
-		return false
-	}
-	if n.y > float32(y) {
-		return false
-	}
-	if n.y+float32(n.layer.SpriteHeight) < float32(y) {
-		return false
-	}
-	return true
-	//return s.image.At(x-s.x, y-s.y).(color.RGBA).A > 0
-}
-
-func (n *Bullet) SetOffset(x, y float32) {
-	n.xOffset = x
-	n.yOffset = y
-	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
+	return n.image.At(int(x), int(y)).(color.RGBA).A > 0
 }
 
 func (n *Bullet) Draw(screen *ebiten.Image) error {
@@ -120,12 +98,12 @@ func (n *Bullet) Draw(screen *ebiten.Image) error {
 	}
 	c := n.layer.Cells[int(n.animation.index)]
 
-	n.bulletMove()
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(-float64(n.layer.SpriteWidth/2), -float64(n.layer.SpriteHeight/2))
 	op.GeoM.Translate(float64(c.PositionX), float64(c.PositionY))
+	op.GeoM.Translate(n.x, n.y)
+	op.GeoM.Translate(camera.X, camera.Y)
 	op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
-	op.GeoM.Translate(float64(n.x), float64(n.y))
 
 	if n.IsDead() {
 		op.ColorM.Scale(1, 1, 1, 0.6)
@@ -159,8 +137,8 @@ func (n *Bullet) Draw(screen *ebiten.Image) error {
 	}
 	x := n.x
 	y := n.y + 30
-	x -= float32(n.SWidth() / 2)
-	y += float32(n.SHeight() / 2)
+	x -= float64(n.SWidth() / 2)
+	y += float64(n.SHeight() / 2)
 
 	return nil
 }
@@ -218,11 +196,11 @@ func (n *Bullet) animationStep() {
 	n.animation.delay = time.Now().Add(time.Duration(c.Duration) * time.Millisecond)
 }
 
-func (n *Bullet) SetPosition(x, y float32) {
+func (n *Bullet) SetPosition(x, y float64) {
 	n.x, n.y = x, y
 }
 
-func (n *Bullet) Position() (float32, float32) {
+func (n *Bullet) Position() (float64, float64) {
 	return n.x, n.y
 }
 
@@ -254,10 +232,10 @@ func (n *Bullet) AnimationGotHit() error {
 	return nil
 }
 
-func (n *Bullet) X() float32 {
+func (n *Bullet) X() float64 {
 	return n.x
 }
 
-func (n *Bullet) Y() float32 {
+func (n *Bullet) Y() float64 {
 	return n.y
 }

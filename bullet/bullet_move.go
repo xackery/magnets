@@ -1,8 +1,6 @@
 package bullet
 
 import (
-	"fmt"
-
 	"github.com/xackery/magnets/global"
 )
 
@@ -68,12 +66,10 @@ func (n *Bullet) bulletBoomerang() {
 	}
 
 	if !n.isReturning && global.Distance(n.x, n.y, n.spawnX, n.spawnY) >= n.distance {
-		fmt.Println("returning")
 		n.isReturning = true
 	}
 
 	if n.isReturning && global.Distance(n.x, n.y, n.player.X(), n.player.Y()) < 5 {
-		fmt.Println("dead")
 		n.isDead = true
 	}
 }

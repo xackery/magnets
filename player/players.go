@@ -2,16 +2,20 @@ package player
 
 import (
 	"fmt"
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/global"
+	"github.com/xackery/magnets/npc"
+	"github.com/xackery/magnets/weapon"
 )
 
 var (
 	players []*Player
 )
 
-func Init() {
+func init() {
 	global.SubscribeOnResolutionChange(onResolutionChange)
 }
 
@@ -34,7 +38,7 @@ func MoveToFront(player *Player) {
 	players = append(players, player)
 }
 
-func At(x, y float32) *Player {
+func At(x, y float64) *Player {
 	for _, p := range players {
 		if !p.IsHit(x, y) {
 			continue
@@ -56,6 +60,52 @@ func Draw(screen *ebiten.Image) error {
 	return nil
 }
 
+func Update() {
+	for _, p := range players {
+		p.Update()
+	}
+}
+
+func HitUpdate() {
+	isCleanupNeeded := false
+	isHit := false
+
+	for _, p := range players {
+		if p.IsDead() {
+			isCleanupNeeded = true
+			continue
+		}
+
+		for x := 0; x < int(p.layer.SpriteWidth); x++ {
+			for y := 0; y < int(p.layer.SpriteHeight); y++ {
+				if p.image.At(x, y).(color.RGBA).A == 0 {
+					continue
+				}
+				n := npc.At(p.x+float64(x), p.y+float64(y))
+				if n == nil {
+					continue
+				}
+				p.Damage(1)
+				isHit = true
+				if p.IsDead() {
+					isCleanupNeeded = true
+				}
+				break
+			}
+			if isHit {
+				break
+			}
+		}
+		if isHit {
+			break
+		}
+	}
+
+	if isCleanupNeeded {
+		cleanupDead()
+	}
+}
+
 func Key(index int) *Player {
 	for i, n := range players {
 		if i+1 == index {
@@ -66,9 +116,17 @@ func Key(index int) *Player {
 }
 
 func onResolutionChange() {
-	for _, n := range players {
+	/*for _, n := range players {
 		n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
+	}*/
+
+	camera.X = float64(global.ScreenWidth() / 4)
+	camera.Y = float64(global.ScreenHeight() / 4)
+	if len(players) > 0 {
+		camera.X -= players[0].x
+		camera.Y -= players[0].y
 	}
+
 }
 
 func Players() []*Player {
@@ -88,16 +146,43 @@ func Clear() {
 	players = []*Player{}
 }
 
-func X() float32 {
+func X() float64 {
 	if len(players) == 0 {
 		return 0
 	}
 	return players[0].x
 }
 
-func Y() float32 {
+func Y() float64 {
 	if len(players) == 0 {
 		return 0
 	}
 	return players[0].y
+}
+
+func cleanupDead() {
+	newPlayers := []*Player{}
+
+	for _, p := range players {
+		if p.IsDead() {
+			continue
+		}
+		newPlayers = append(newPlayers, p)
+	}
+	players = newPlayers
+}
+
+func WeaponAdd(weapon *weapon.Weapon) {
+	if len(players) == 0 {
+		return
+	}
+	n := players[0]
+	n.weapons[weapon.WeaponType] = weapon
+}
+
+func IsDead() bool {
+	if len(players) == 0 {
+		return true
+	}
+	return players[0].IsDead()
 }

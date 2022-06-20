@@ -2,11 +2,15 @@ package player
 
 import (
 	"fmt"
+	"image/color"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/rs/zerolog/log"
 	"github.com/xackery/aseprite"
+	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/entity"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/input"
@@ -19,18 +23,14 @@ type Player struct {
 	entityID   uint
 	layer      *aseprite.Layer
 	image      *ebiten.Image
-	anchor     int
 	maxHP      int
 	hp         int
 	spriteName string
 	layerName  string
-	x          float32
-	y          float32
-	key        int
-	xOffset    float32
-	yOffset    float32
+	x          float64
+	y          float64
+	isLastLeft bool
 	animation  animation
-	nameTag    string
 	direction  int
 	weapons    map[int]*weapon.Weapon
 }
@@ -42,8 +42,7 @@ type animation struct {
 	isPingPongToggle bool
 }
 
-func New(spriteName string, layerName string, key int, anchor int, xOffset float32, yOffset float32) (*Player, error) {
-
+func New(spriteName string, layerName string) (*Player, error) {
 	name := "base"
 	layer, err := library.Layer(spriteName, layerName)
 	if err != nil {
@@ -56,20 +55,15 @@ func New(spriteName string, layerName string, key int, anchor int, xOffset float
 	n := &Player{
 		spriteName: spriteName,
 		layerName:  layerName,
-		key:        key,
 		hp:         1,
 		maxHP:      1,
 		direction:  global.DirectionRight,
-		anchor:     anchor,
-		xOffset:    xOffset,
-		yOffset:    yOffset,
 		layer:      layer,
 		entityID:   entity.NextEntityID(),
 		image:      layer.Cells[0].EbitenImage,
 		weapons:    make(map[int]*weapon.Weapon),
 	}
 
-	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
 	err = n.SetAnimation("left")
 	if err != nil {
 		return nil, fmt.Errorf("SetAnimation %s: %w", "left", err)
@@ -83,69 +77,47 @@ func New(spriteName string, layerName string, key int, anchor int, xOffset float
 	return n, nil
 }
 
-func (n *Player) IsHit(x, y float32) bool {
+func (n *Player) IsHit(x, y float64) bool {
 	if n.IsDead() {
 		return false
 	}
-	if n.x > float32(x) {
+	/*if n.x > float64(x) {
 		return false
 	}
-	if n.x+float32(n.layer.SpriteWidth) < float32(x) {
+	if n.x+float64(n.layer.SpriteWidth) < float64(x) {
 		return false
 	}
-	if n.y > float32(y) {
+	if n.y > float64(y) {
 		return false
 	}
-	if n.y+float32(n.layer.SpriteHeight) < float32(y) {
+	if n.y+float64(n.layer.SpriteHeight) < float64(y) {
 		return false
 	}
-	return true
+	return true*/
+	return n.image.At(int(x), int(y)).(color.RGBA).A > 0
 	//return s.image.At(x-s.x, y-s.y).(color.RGBA).A > 0
-}
-
-func (n *Player) SetOffset(x, y float32) {
-	n.xOffset = x
-	n.yOffset = y
-	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
 }
 
 func (n *Player) Draw(screen *ebiten.Image) error {
 
-	isMoving := input.IsPlayerMoving()
-	n.direction = input.PlayerDirection
-	moveSpeed := float32(0.5)
-	if isMoving {
-		n.animationStep()
-		if global.IsDirectionLeft(n.direction) {
-			n.x -= moveSpeed
-		}
-		if global.IsDirectionRight(n.direction) {
-			n.x += moveSpeed
-		}
-
-		if global.IsDirectionDown(n.direction) {
-			n.y += moveSpeed
-		}
-
-		if global.IsDirectionUp(n.direction) {
-			n.y -= moveSpeed
-		}
-	}
 	if len(n.layer.Cells) <= int(n.animation.index) {
 		return fmt.Errorf("animationIndex %d is out of bounds for body cells %d", n.animation.index, len(n.layer.Cells))
 	}
 	c := n.layer.Cells[int(n.animation.index)]
 
 	op := &ebiten.DrawImageOptions{}
+	if n.isLastLeft {
+		op.GeoM.Scale(-1, 1)
+		op.GeoM.Translate(float64(n.layer.SpriteWidth/2), 0)
+	}
 	op.GeoM.Translate(-float64(n.layer.SpriteWidth/2), -float64(n.layer.SpriteHeight/2))
 	op.GeoM.Translate(float64(c.PositionX), float64(c.PositionY))
-	op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
-	if global.IsDirectionLeft(int(n.direction)) {
-		op.GeoM.Scale(-1, 1)
-		//op.GeoM.Translate(float64(n.layer.SpriteWidth), 0)
-	}
-
+	op.GeoM.Translate(float64(camera.X), float64(camera.Y))
 	op.GeoM.Translate(float64(n.x), float64(n.y))
+	op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
+
+	//op.GeoM.Translate(float64(global.ScreenWidth())/2, float64(global.ScreenHeight())/2)
+	//op.GeoM.Translate(float64(n.x), float64(n.y))
 
 	if n.IsDead() {
 		op.ColorM.Scale(1, 1, 1, 0.6)
@@ -154,7 +126,6 @@ func (n *Player) Draw(screen *ebiten.Image) error {
 	} else {
 		op.ColorM.Scale(1, 1, 1, 1)
 	}
-	n.weaponDraw(screen)
 	//duplication spell effect?
 	/*for j := -128; j <= 128; j += 32 {
 		//for i := -1; i <= 1; i++ {
@@ -181,10 +152,10 @@ func (n *Player) Draw(screen *ebiten.Image) error {
 	}
 	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
 	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
-	x := n.x
-	y := n.y + 30
-	x -= float32(n.SWidth() / 2)
-	y += float32(n.SHeight() / 2)
+	//x := n.x
+	//y := n.y + 30
+	//x -= float64(n.SWidth() / 2)
+	//y += float64(n.SHeight() / 2)
 
 	return nil
 }
@@ -242,11 +213,52 @@ func (n *Player) animationStep() {
 	n.animation.delay = time.Now().Add(time.Duration(c.Duration) * time.Millisecond)
 }
 
-func (n *Player) SetPosition(x, y float32) {
+func (n *Player) Update() {
+
+	if input.IsPressed(ebiten.Key1) {
+		w, err := weapon.New(weapon.WeaponArrow)
+		if err != nil {
+			fmt.Println("weapon new:", err)
+			os.Exit(1)
+		}
+		n.WeaponAdd(w)
+	}
+
+	isMoving := input.IsPlayerMoving()
+	moveSpeed := float64(0.5)
+	if isMoving {
+		n.direction = input.PlayerDirection
+		n.animationStep()
+		if global.IsDirectionLeft(n.direction) {
+			camera.X += moveSpeed
+			n.x -= moveSpeed
+			n.isLastLeft = true
+		}
+		if global.IsDirectionRight(n.direction) {
+			camera.X -= moveSpeed
+			n.x += moveSpeed
+			n.isLastLeft = false
+		}
+
+		if global.IsDirectionDown(n.direction) {
+			camera.Y -= moveSpeed
+			n.y += moveSpeed
+		}
+
+		if global.IsDirectionUp(n.direction) {
+			camera.Y += moveSpeed
+			n.y -= moveSpeed
+		}
+	}
+
+	n.weaponUpdate()
+}
+
+func (n *Player) SetPosition(x, y float64) {
 	n.x, n.y = x, y
 }
 
-func (n *Player) Position() (float32, float32) {
+func (n *Player) Position() (float64, float64) {
 	return n.x, n.y
 }
 
@@ -257,6 +269,7 @@ func (n *Player) HID() string {
 func (n *Player) Damage(damage int) bool {
 	n.hp -= damage
 	if n.hp < 1 {
+		log.Debug().Msgf("player got killed")
 		n.hp = 0
 		return true
 	}
@@ -287,10 +300,10 @@ func (n *Player) AnimationGotHit() error {
 	return nil
 }
 
-func (n *Player) X() float32 {
+func (n *Player) X() float64 {
 	return n.x
 }
 
-func (n *Player) Y() float32 {
+func (n *Player) Y() float64 {
 	return n.y
 }

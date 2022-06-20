@@ -2,6 +2,7 @@ package bullet
 
 import (
 	"fmt"
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/xackery/magnets/global"
@@ -12,7 +13,7 @@ var (
 	bullets []*Bullet
 )
 
-func Init() {
+func init() {
 	global.SubscribeOnResolutionChange(onResolutionChange)
 }
 
@@ -35,7 +36,7 @@ func MoveToFront(bullet *Bullet) {
 	bullets = append(bullets, bullet)
 }
 
-func At(x, y float32) *Bullet {
+func At(x, y float64) *Bullet {
 	for _, p := range bullets {
 		if !p.IsHit(x, y) {
 			continue
@@ -46,19 +47,14 @@ func At(x, y float32) *Bullet {
 }
 
 func Draw(screen *ebiten.Image) error {
-	var err error
-	isCleanupNeeded := false
-	for _, p := range bullets {
-		if p.IsDead() {
-			isCleanupNeeded = true
+	for _, b := range bullets {
+		if b.IsDead() {
+			continue
 		}
-		err = p.Draw(screen)
+		err := b.Draw(screen)
 		if err != nil {
 			return fmt.Errorf("draw: %w", err)
 		}
-	}
-	if isCleanupNeeded {
-		cleanupDead()
 	}
 	return nil
 }
@@ -68,31 +64,38 @@ func Update() {
 		if b.IsDead() {
 			continue
 		}
-		n := npc.At(b.x-float32(b.layer.SpriteWidth/2), b.y)
-		if n != nil {
-			n.Damage(b.damage)
-			b.isDead = true
-			continue
-		}
-		n = npc.At(b.x+float32(b.layer.SpriteWidth/2), b.y)
-		if n != nil {
-			n.Damage(b.damage)
-			b.isDead = true
-			continue
-		}
-		n = npc.At(b.x, b.y-float32(b.layer.SpriteHeight/2))
-		if n != nil {
-			n.Damage(b.damage)
-			b.isDead = true
-			continue
-		}
-		n = npc.At(b.x, b.y+float32(b.layer.SpriteHeight/2))
-		if n != nil {
-			n.Damage(b.damage)
-			b.isDead = true
+		b.bulletMove()
+	}
+}
+
+func HitUpdate() {
+	isCleanupNeeded := false
+
+	for _, b := range bullets {
+		if b.IsDead() {
+			isCleanupNeeded = true
 			continue
 		}
 
+		for x := 0; x < int(b.layer.SpriteWidth); x++ {
+			for y := 0; y < int(b.layer.SpriteHeight); y++ {
+				if b.image.At(x, y).(color.RGBA).A == 0 {
+					continue
+				}
+				n := npc.At(b.x+float64(x), b.y+float64(y))
+				if n == nil {
+					continue
+				}
+				n.Damage(b.damage)
+				b.isDead = true
+				return
+			}
+		}
+
+	}
+
+	if isCleanupNeeded {
+		cleanupDead()
 	}
 }
 
@@ -106,9 +109,9 @@ func Key(index int) *Bullet {
 }
 
 func onResolutionChange() {
-	for _, n := range bullets {
+	/*	for _, n := range bullets {
 		n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
-	}
+	}*/
 }
 
 func Bullets() []*Bullet {

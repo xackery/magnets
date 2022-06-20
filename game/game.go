@@ -10,6 +10,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/xackery/magnets/bullet"
+	"github.com/xackery/magnets/camera"
+	"github.com/xackery/magnets/collision"
 	"github.com/xackery/magnets/font"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/input"
@@ -35,6 +37,8 @@ type Game struct {
 	ctx              context.Context
 	cancel           context.CancelFunc
 	resolutionChange time.Time
+	frame            int64
+	nextFrame        time.Time
 }
 
 // New creates a new game instance
@@ -48,7 +52,7 @@ func New(ctx context.Context, host string) (*Game, error) {
 	rand.Seed(time.Now().UnixNano())
 
 	ebiten.SetWindowSize(global.ScreenWidth(), global.ScreenHeight())
-	//ebiten.SetWindowResizable(true)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	//ebiten.SetFPSMode(ebiten.FPSModeVsyncOffMaximum)
 
 	g.resolutionChange = time.Now().Add(1 * time.Second)
@@ -78,37 +82,50 @@ func New(ctx context.Context, host string) (*Game, error) {
 		}
 	}
 
-	_, err = npc.New("heart", "default", 0, global.AnchorTopLeft, 250, 64)
-	if err != nil {
-		return nil, fmt.Errorf("npc new heart: %w", err)
-	}
-	p, err := player.New("player", "default", 0, global.AnchorTopLeft, 120, 64)
+	npc.New(npc.NpcBat, 20, 0)
+	npc.New(npc.NpcCloud, 40, 0)
+	npc.New(npc.NpcFlower, 60, 0)
+	npc.New(npc.NpcAseprite, 80, 0)
+	npc.New(npc.NpcPot, 100, 0)
+	npc.New(npc.NpcKnight, 120, 0)
+
+	p, err := player.New("player", "default")
 	if err != nil {
 		return nil, fmt.Errorf("player new player: %w", err)
 	}
 
-	w, err := weapon.New(weapon.WeaponBoomerang)
-	if err != nil {
-		return nil, fmt.Errorf("new weapon boomerang: %w", err)
+	weapons := []int{
+		//weapon.WeaponArrow,
+		//weapon.WeaponBoomerang,
+		//weapon.WeaponShuriken,
+		//weapon.WeaponSpear,
+		//weapon.WeaponSword,
 	}
-	p.WeaponAdd(w)
+	for _, w := range weapons {
+		wp, _ := weapon.New(w)
+		p.WeaponAdd(wp)
+	}
 
+	g.Layout(global.ScreenWidth(), global.ScreenHeight())
 	Instance = g
 	return g, nil
 }
 
 // Draw is called for render update
 func (g *Game) Draw(screen *ebiten.Image) {
+	collision.Image = ebiten.NewImage(screen.Bounds().Dx(), screen.Bounds().Dy())
+
 	screen.Fill(color.RGBA64{R: 0x5050, G: 0x5050, B: 0xcfcf, A: 0xFFFF})
 	//update game
-	x, y := ebiten.CursorPosition()
+	//x, y := ebiten.CursorPosition()
 
-	npc.Draw(screen)
+	npc.Draw(collision.Image)
 	bullet.Draw(screen)
-	player.Draw(screen)
+	player.Draw(collision.Image)
 
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f, Position: %d, %d", ebiten.CurrentTPS(), x, y), 0, global.ScreenHeight()-14)
+	screen.DrawImage(collision.Image, nil)
 
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f, Position: %0.2f, %0.2f, Camera: %0.2f, %0.2f", ebiten.CurrentTPS(), player.X(), player.Y(), camera.X, camera.Y), 0, global.ScreenHeight()-14)
 }
 
 // Layout takes the outside size (e.g., the window size) and returns the (logical) screen size.
@@ -124,8 +141,25 @@ func (g *Game) Update() error {
 		g.resolutionChange = time.Now().Add(100 * time.Hour)
 		//ebiten.SetWindowSize(640, 480)
 	}
+	g.frame++
+	if time.Now().After(g.nextFrame) {
+		g.nextFrame = time.Now().Add(1 * time.Second)
+		g.frame = 0
+	}
+
+	ebiten.CurrentTPS()
 
 	input.Update()
 	bullet.Update()
+	player.Update()
+	if !player.IsDead() {
+		npc.Update(player.X(), player.Y())
+	}
+
+	if g.frame%10 == 0 {
+		bullet.HitUpdate()
+		player.HitUpdate()
+		npc.HitUpdate()
+	}
 	return nil
 }

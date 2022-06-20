@@ -2,11 +2,14 @@ package npc
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/xackery/aseprite"
+	"github.com/xackery/magnets/camera"
+	"github.com/xackery/magnets/collision"
 	"github.com/xackery/magnets/entity"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/library"
@@ -17,18 +20,14 @@ type Npc struct {
 	entityID   uint
 	layer      *aseprite.Layer
 	image      *ebiten.Image
-	anchor     int
 	maxHP      int
 	hp         int
 	spriteName string
 	layerName  string
-	x          float32
-	y          float32
-	key        int
-	xOffset    float32
-	yOffset    float32
+	x          float64
+	y          float64
 	animation  animation
-	nameTag    string
+	moveSpeed  float64
 }
 
 type animation struct {
@@ -38,10 +37,14 @@ type animation struct {
 	isPingPongToggle bool
 }
 
-func New(spriteName string, layerName string, key int, anchor int, xOffset float32, yOffset float32) (*Npc, error) {
+func New(npcType int, x float64, y float64) (*Npc, error) {
+	npcData, ok := npcTypes[npcType]
+	if !ok {
+		return nil, fmt.Errorf("npc type %d not found", npcType)
+	}
 
 	name := "base"
-	layer, err := library.Layer(spriteName, layerName)
+	layer, err := library.Layer(npcData.Sprite.spriteName, npcData.Sprite.layerName)
 	if err != nil {
 		return nil, fmt.Errorf("library.Layer: %w", err)
 	}
@@ -50,23 +53,21 @@ func New(spriteName string, layerName string, key int, anchor int, xOffset float
 	}
 
 	n := &Npc{
-		spriteName: spriteName,
-		layerName:  layerName,
-		hp:         1,
-		maxHP:      1,
-		key:        key,
-		anchor:     anchor,
-		xOffset:    xOffset,
-		yOffset:    yOffset,
+		spriteName: npcData.Sprite.spriteName,
+		layerName:  npcData.Sprite.layerName,
+		hp:         npcData.MaxHP,
+		maxHP:      npcData.MaxHP,
+		moveSpeed:  npcData.MoveSpeed,
+		x:          x,
+		y:          y,
 		layer:      layer,
 		entityID:   entity.NextEntityID(),
 		image:      layer.Cells[0].EbitenImage,
 	}
 
-	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
-	err = n.SetAnimation("left")
+	err = n.SetAnimation("walk")
 	if err != nil {
-		return nil, fmt.Errorf("SetAnimation %s: %w", "left", err)
+		return nil, fmt.Errorf("SetAnimation %s: %w", "walk", err)
 	}
 
 	npcs = append(npcs, n)
@@ -77,34 +78,17 @@ func New(spriteName string, layerName string, key int, anchor int, xOffset float
 	return n, nil
 }
 
-func (n *Npc) IsHit(x, y float32) bool {
+func (n *Npc) IsHit(x, y float64) bool {
 	if n.IsDead() {
 		return false
 	}
-	//fmt.Println(x, y, "vs", n.x, n.y, n.layer.SpriteWidth, n.layer.SpriteHeight)
-	if n.x-(float32(n.layer.SpriteWidth)/2) > float32(x) {
-		return false
-	}
-	if n.x+(float32(n.layer.SpriteWidth)/2) < float32(x) {
-		return false
-	}
-	if n.y-float32(n.layer.SpriteHeight/2) > float32(y) {
-		return false
-	}
-	if n.y+float32(n.layer.SpriteHeight/2) < float32(y) {
-		return false
-	}
-	return true
-	//return s.image.At(x-s.x, y-s.y).(color.RGBA).A > 0
-}
-
-func (n *Npc) SetOffset(x, y float32) {
-	n.xOffset = x
-	n.yOffset = y
-	n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
+	return n.image.At(int(x-n.x), int(y-n.y)).(color.RGBA).A > 0
 }
 
 func (n *Npc) Draw(screen *ebiten.Image) error {
+	if n.IsDead() {
+		return nil
+	}
 	n.animationStep()
 	if len(n.layer.Cells) <= int(n.animation.index) {
 		return fmt.Errorf("animationIndex %d is out of bounds for body cells %d", n.animation.index, len(n.layer.Cells))
@@ -113,9 +97,10 @@ func (n *Npc) Draw(screen *ebiten.Image) error {
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(-float64(n.layer.SpriteWidth/2), -float64(n.layer.SpriteHeight/2))
+	op.GeoM.Translate(camera.X, camera.Y)
 	op.GeoM.Translate(float64(c.PositionX), float64(c.PositionY))
+	op.GeoM.Translate(n.x, n.y)
 	op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
-	op.GeoM.Translate(float64(n.x), float64(n.y))
 
 	if n.IsDead() {
 		op.ColorM.Scale(1, 1, 1, 0.6)
@@ -151,12 +136,45 @@ func (n *Npc) Draw(screen *ebiten.Image) error {
 	}
 	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
 	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
-	x := n.x
+	/*x := n.x
 	y := n.y + 30
-	x -= float32(n.SWidth() / 2)
-	y += float32(n.SHeight() / 2)
+	x -= float64(n.SWidth() / 2)
+	y += float64(n.SHeight() / 2)*/
 
 	return nil
+}
+
+func (n *Npc) Update(playerX, playerY float64) {
+
+	if !isAIEnabled {
+		return
+	}
+
+	x := playerX - n.x
+	y := playerY - n.y
+
+	if x > 0 && x > n.moveSpeed {
+		x = n.moveSpeed
+	}
+	if x < 0 && -x > -n.moveSpeed {
+		x = -n.moveSpeed
+	}
+
+	if y > 0 && y > n.moveSpeed {
+		y = n.moveSpeed
+	}
+	if y < 0 && -y > -n.moveSpeed {
+		y = -n.moveSpeed
+	}
+
+	targetX := n.x + x
+	targetY := n.y + y
+	if collision.Image.At(int(targetX), int(targetY)).(color.RGBA).A == 0 {
+		n.x += x
+		n.y += y
+		return
+	}
+
 }
 
 // SetAnimation sets the animation of the npc
@@ -212,11 +230,11 @@ func (n *Npc) animationStep() {
 	n.animation.delay = time.Now().Add(time.Duration(c.Duration) * time.Millisecond)
 }
 
-func (n *Npc) SetPosition(x, y float32) {
+func (n *Npc) SetPosition(x, y float64) {
 	n.x, n.y = x, y
 }
 
-func (n *Npc) Position() (float32, float32) {
+func (n *Npc) Position() (float64, float64) {
 	return n.x, n.y
 }
 
@@ -225,6 +243,7 @@ func (n *Npc) HID() string {
 }
 
 func (n *Npc) Damage(damage int) bool {
+
 	n.hp -= damage
 	if n.hp < 1 {
 		n.hp = 0
@@ -257,10 +276,10 @@ func (n *Npc) AnimationGotHit() error {
 	return nil
 }
 
-func (n *Npc) X() float32 {
+func (n *Npc) X() float64 {
 	return n.x
 }
 
-func (n *Npc) Y() float32 {
+func (n *Npc) Y() float64 {
 	return n.y
 }

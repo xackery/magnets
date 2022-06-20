@@ -2,16 +2,25 @@ package npc
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/rs/zerolog/log"
+	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/global"
+	"github.com/xackery/magnets/input"
 )
 
 var (
-	npcs []*Npc
+	npcs                []*Npc
+	isAIEnabled         bool
+	isAIEnabledCooldown time.Time
+	spawnerCooldown     time.Time
+	spawnMax            int = 10
 )
 
-func Init() {
+func init() {
 	global.SubscribeOnResolutionChange(onResolutionChange)
 }
 
@@ -34,7 +43,7 @@ func MoveToFront(npc *Npc) {
 	npcs = append(npcs, npc)
 }
 
-func At(x, y float32) *Npc {
+func At(x, y float64) *Npc {
 	for _, p := range npcs {
 		if !p.IsHit(x, y) {
 			continue
@@ -46,22 +55,57 @@ func At(x, y float32) *Npc {
 
 func Draw(screen *ebiten.Image) error {
 	var err error
-	isCleanupNeeded := false
 	for _, p := range npcs {
-		if p.IsDead() {
-			isCleanupNeeded = true
-		}
 		err = p.Draw(screen)
 		if err != nil {
 			return fmt.Errorf("draw: %w", err)
 		}
 	}
 
+	return nil
+}
+
+func Update(playerX, playerY float64) {
+	if input.IsPressed(ebiten.KeyGraveAccent) && time.Now().After(isAIEnabledCooldown) {
+		isAIEnabled = !isAIEnabled
+		log.Debug().Msgf("AI is now %t", isAIEnabled)
+		isAIEnabledCooldown = time.Now().Add(500 * time.Millisecond)
+	}
+
+	for _, p := range npcs {
+		p.Update(playerX, playerY)
+	}
+	if isAIEnabled {
+		if time.Now().After(spawnerCooldown) {
+			spawnerCooldown = time.Now().Add(3 * time.Second)
+			if len(npcs) > spawnMax {
+				return
+			}
+			spawnCount := spawnMax + 1 - len(npcs)
+			for i := 0; i < spawnCount; i++ {
+				rX := -100 + rand.Float64()*(100-200)
+				rY := -100 + rand.Float64()*(100-200)
+
+				New(NpcBat, camera.X*2+rX, camera.Y*2+rY)
+			}
+			log.Debug().Msgf("spawned %d", spawnCount)
+		}
+	}
+}
+
+func HitUpdate() {
+	isCleanupNeeded := false
+
+	for _, p := range npcs {
+		if p.IsDead() {
+			isCleanupNeeded = true
+			continue
+		}
+	}
+
 	if isCleanupNeeded {
 		cleanupDead()
 	}
-
-	return nil
 }
 
 func Key(index int) *Npc {
@@ -74,9 +118,9 @@ func Key(index int) *Npc {
 }
 
 func onResolutionChange() {
-	for _, n := range npcs {
+	/*for _, n := range npcs {
 		n.SetPosition(global.AnchorPosition(n.anchor, n.xOffset, n.yOffset))
-	}
+	}*/
 }
 
 func Npcs() []*Npc {
