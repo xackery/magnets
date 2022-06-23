@@ -3,6 +3,8 @@ package weapon
 import (
 	"fmt"
 	"time"
+
+	"github.com/xackery/magnets/bullet"
 )
 
 const (
@@ -15,6 +17,7 @@ type Weapon struct {
 	Cooldown   time.Time
 	WeaponType int
 	Level      int
+	Bullets    []*bullet.Bullet
 }
 
 func New(weaponType int) (*Weapon, error) {

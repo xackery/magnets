@@ -50,3 +50,10 @@ func ScreenScaleY() float64 {
 func SubscribeOnResolutionChange(event func()) {
 	onResolutionChangeSubscribers = append(onResolutionChangeSubscribers, event)
 }
+
+func ScreenSmallestDimension() float64 {
+	if screenWidth > screenHeight {
+		return float64(screenHeight)
+	}
+	return float64(screenWidth)
+}

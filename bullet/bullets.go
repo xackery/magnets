@@ -87,7 +87,9 @@ func HitUpdate() {
 					continue
 				}
 				n.Damage(b.damage)
-				b.isDead = true
+				if !b.isImmortal {
+					b.isDead = true
+				}
 				return
 			}
 		}

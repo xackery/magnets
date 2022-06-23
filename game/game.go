@@ -19,6 +19,7 @@ import (
 	"github.com/xackery/magnets/npc"
 	"github.com/xackery/magnets/player"
 	"github.com/xackery/magnets/weapon"
+	"github.com/xackery/magnets/world"
 	"golang.org/x/image/font/gofont/goregular"
 )
 
@@ -106,6 +107,10 @@ func New(ctx context.Context, host string) (*Game, error) {
 		p.WeaponAdd(wp)
 	}
 
+	_, err = world.New(world.WorldGrass)
+	if err != nil {
+		return nil, fmt.Errorf("world.New: %w", err)
+	}
 	g.Layout(global.ScreenWidth(), global.ScreenHeight())
 	Instance = g
 	return g, nil
@@ -119,6 +124,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	//update game
 	//x, y := ebiten.CursorPosition()
 
+	world.Draw(screen)
 	npc.Draw(collision.Image)
 	bullet.Draw(screen)
 	player.Draw(collision.Image)
@@ -156,7 +162,7 @@ func (g *Game) Update() error {
 		npc.Update(player.X(), player.Y())
 	}
 
-	if g.frame%10 == 0 {
+	if g.frame%2 == 0 {
 		bullet.HitUpdate()
 		player.HitUpdate()
 		npc.HitUpdate()

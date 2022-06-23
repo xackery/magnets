@@ -2,12 +2,12 @@ package npc
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/input"
 )
@@ -17,7 +17,7 @@ var (
 	isAIEnabled         bool
 	isAIEnabledCooldown time.Time
 	spawnerCooldown     time.Time
-	spawnMax            int = 10
+	spawnMax            int = 50
 )
 
 func init() {
@@ -82,11 +82,19 @@ func Update(playerX, playerY float64) {
 				return
 			}
 			spawnCount := spawnMax + 1 - len(npcs)
+			maxDistance := global.ScreenSmallestDimension() / 2
+			minDistance := global.ScreenSmallestDimension() / 2.5
 			for i := 0; i < spawnCount; i++ {
-				rX := -100 + rand.Float64()*(100-200)
-				rY := -100 + rand.Float64()*(100-200)
 
-				New(NpcBat, camera.X*2+rX, camera.Y*2+rY)
+				theta := rand.Float64() * (math.Pi * 2) * math.Pi
+
+				distance := (rand.Float64() * (maxDistance - minDistance)) + minDistance
+				//fmt.Println("distance", distance, global.ScreenSmallestDimension())
+				/*
+					rX := -100 + rand.Float64()*(100-200)
+					rY := -100 + rand.Float64()*(100-200)*/
+
+				New(NpcBat, playerY+math.Sin(theta)*distance, playerX+math.Cos(theta)*distance)
 			}
 			log.Debug().Msgf("spawned %d", spawnCount)
 		}

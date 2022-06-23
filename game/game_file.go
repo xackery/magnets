@@ -9,6 +9,7 @@ var (
 		"item.aseprite",
 		"land.aseprite",
 		"player.aseprite",
-		"tile.aseprite",
+		"crystal.aseprite",
+		"world-1.aseprite",
 	}
 )

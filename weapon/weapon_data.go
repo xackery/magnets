@@ -49,18 +49,19 @@ func init() {
 	}
 
 	weaponTypes[WeaponArrow] = &WeaponData{
-		Delay: 400 * time.Millisecond,
+		Delay: 1500 * time.Millisecond,
 		Bullet: &bullet.BulletData{
-			BehaviorType: bullet.BehaviorLinear,
+			BehaviorType: bullet.BehaviorCircle,
 			Damage:       10,
-			SpriteName:   "arrow",
-			LayerName:    "arrow",
-			Distance:     300,
+			IsImmortal:   true,
+			SpriteName:   "crystal",
+			LayerName:    "crystal",
+			Distance:     20,
 			MoveSpeed:    4,
 		},
 		Icon: &SpriteData{
-			spriteName: "arrow",
-			layerName:  "arrow",
+			spriteName: "crystal",
+			layerName:  "crystal",
 		},
 	}
 

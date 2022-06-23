@@ -20,13 +20,17 @@ func (n *Player) WeaponAdd(weapon *weapon.Weapon) {
 
 func (n *Player) weaponUpdate() {
 	for _, weapon := range n.weapons {
-		if time.Now().Before(weapon.Cooldown) {
+		if weapon.Data.Bullet.IsImmortal && len(weapon.Bullets) > 0 {
+			continue
+		} else if time.Now().Before(weapon.Cooldown) {
 			continue
 		}
+
 		weapon.Shoot()
-		_, err := bullet.New(weapon.Data.Bullet, n, n.direction)
+		b, err := bullet.New(weapon.Data.Bullet, n, n.direction)
 		if err != nil {
 			fmt.Println("bullet.New:", err)
 		}
+		weapon.Bullets = append(weapon.Bullets, b)
 	}
 }

@@ -24,6 +24,7 @@ type Bullet struct {
 	damage       int
 	spriteName   string
 	layerName    string
+	rotation     float64
 	x            float64
 	y            float64
 	spawnX       float64
@@ -32,6 +33,7 @@ type Bullet struct {
 	distance     float64 //distance an object should travel to
 	animation    animation
 	isDead       bool
+	isImmortal   bool //will the bullet die on impact
 	isReturning  bool // For behaviors that go to and fro, this is the returning flag
 	moveSpeed    float64
 }
@@ -65,6 +67,7 @@ func New(b *BulletData, player entity.Entiter, direction int) (*Bullet, error) {
 		image:        layer.Cells[0].EbitenImage,
 		distance:     b.Distance,
 		moveSpeed:    b.MoveSpeed,
+		isImmortal:   b.IsImmortal,
 	}
 	n.x = player.X() // + float64(player.SWidth()/4)
 	n.y = player.Y() // + float64(player.SHeight()/4)
