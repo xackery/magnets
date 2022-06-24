@@ -63,6 +63,7 @@ func New(spriteName string, layerName string) (*Player, error) {
 		image:      layer.Cells[0].EbitenImage,
 		weapons:    make(map[int]*weapon.Weapon),
 	}
+	global.Player = n
 
 	err = n.SetAnimation("left")
 	if err != nil {
@@ -229,25 +230,55 @@ func (n *Player) Update() {
 	if isMoving {
 		n.direction = input.PlayerDirection
 		n.animationStep()
+		delta := float64(moveSpeed)
 		if global.IsDirectionLeft(n.direction) {
-			camera.X += moveSpeed
-			n.x -= moveSpeed
+			/*delta = 0
+			for ; delta < moveSpeed; delta += 0.1 {
+				if world.IsCollision(n.x-delta, n.y) {
+					delta -= 0.1
+					break
+				}
+			}*/
+
+			camera.X += delta
+			n.x -= delta
 			n.isLastLeft = true
 		}
 		if global.IsDirectionRight(n.direction) {
-			camera.X -= moveSpeed
-			n.x += moveSpeed
+			/*delta = 0
+			for ; delta < moveSpeed; delta += 0.1 {
+				if world.IsCollision(n.x+delta, n.y) {
+					delta -= 0.1
+					break
+				}
+			}*/
+			camera.X -= delta
+			n.x += delta
 			n.isLastLeft = false
 		}
 
 		if global.IsDirectionDown(n.direction) {
-			camera.Y -= moveSpeed
-			n.y += moveSpeed
+			/*delta = 0
+			for ; delta < moveSpeed; delta += 0.1 {
+				if world.IsCollision(n.x, n.y+delta) {
+					delta -= 0.1
+					break
+				}
+			}*/
+			camera.Y -= delta
+			n.y += delta
 		}
 
 		if global.IsDirectionUp(n.direction) {
-			camera.Y += moveSpeed
-			n.y -= moveSpeed
+			/*delta = 0
+			for ; delta < moveSpeed; delta += 0.1 {
+				if world.IsCollision(n.x, n.y-delta) {
+					delta -= 0.1
+					break
+				}
+			}*/
+			camera.Y += delta
+			n.y -= delta
 		}
 	}
 

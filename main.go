@@ -65,7 +65,7 @@ func main() {
 	if len(WebAssetPath) > 0 {
 		library.SetWebAssetPath(WebAssetPath)
 	}
-	global.ScreenOnLayoutChange(ScreenWidth, ScreenHeight)
+	global.ScreenOnLayoutChange(ScreenWidth, ScreenHeight, true)
 	global.ScreenScaleChange(ebiten.DeviceScaleFactor(), ebiten.DeviceScaleFactor())
 	g, err := game.New(ctx, WebAssetPath)
 	if err != nil {

@@ -88,3 +88,10 @@ func Y() float64 {
 	}
 	return worlds[0].y
 }
+
+func IsCollision(x, y float64) bool {
+	if len(worlds) == 0 {
+		return false
+	}
+	return worlds[0].IsHit(x, y)
+}

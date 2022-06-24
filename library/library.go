@@ -88,6 +88,13 @@ func Load(assetName string) error {
 		}
 		a.Player.SetVolume(global.Volume())
 		audios[baseName] = a
+	case ".wav":
+		a, err := loadWav(assetName)
+		if err != nil {
+			return fmt.Errorf("loadWav: %w", err)
+		}
+		a.Player.SetVolume(global.Volume())
+		audios[baseName] = a
 	default:
 		return fmt.Errorf("unsupported extension: %s", ext)
 	}

@@ -22,9 +22,11 @@ func ScreenIsLandscape() bool {
 	return screenWidth > screenHeight
 }
 
-func ScreenOnLayoutChange(x, y int) {
-	if (screenWidth == x && screenHeight == y) || (x == 0 && y == 0) {
-		return
+func ScreenOnLayoutChange(x, y int, isForced bool) {
+	if !isForced {
+		if (screenWidth == x && screenHeight == y) || (x == 0 && y == 0) {
+			return
+		}
 	}
 	log.Debug().Msgf("layout changed to %dx%d", x, y)
 	screenWidth = x

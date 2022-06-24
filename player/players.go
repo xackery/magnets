@@ -5,8 +5,10 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/rs/zerolog/log"
 	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/global"
+	"github.com/xackery/magnets/item"
 	"github.com/xackery/magnets/npc"
 	"github.com/xackery/magnets/weapon"
 )
@@ -82,15 +84,19 @@ func HitUpdate() {
 					continue
 				}
 				n := npc.At(p.x+float64(x), p.y+float64(y))
-				if n == nil {
-					continue
+				if n != nil {
+					p.Damage(1)
+					isHit = true
+					if p.IsDead() {
+						isCleanupNeeded = true
+					}
 				}
-				p.Damage(1)
-				isHit = true
-				if p.IsDead() {
-					isCleanupNeeded = true
+				i := item.Pickup(p.x+float64(x), p.y+float64(y))
+				if i != nil {
+					if i.Data.SpriteName == "rupee" {
+						log.Debug().Msgf("gained %d exp", i.Data.Value)
+					}
 				}
-				break
 			}
 			if isHit {
 				break

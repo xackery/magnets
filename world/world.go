@@ -13,12 +13,13 @@ import (
 )
 
 type World struct {
-	hid      string
-	entityID uint
-	image    *ebiten.Image
-	layer    *aseprite.Layer
-	x        float64
-	y        float64
+	hid       string
+	entityID  uint
+	image     *ebiten.Image
+	collision *ebiten.Image
+	layer     *aseprite.Layer
+	x         float64
+	y         float64
 }
 
 func New(worldType int) (*World, error) {
@@ -35,9 +36,19 @@ func New(worldType int) (*World, error) {
 		return nil, fmt.Errorf("no cells found on sprite %s layer %s", wData.Tilemap.spriteName, wData.Tilemap.layerName)
 	}
 
+	cLayer, err := library.Layer(wData.Tilemap.spriteName, "collision")
+	if err != nil {
+		return nil, fmt.Errorf("library.Layer: %w", err)
+	}
+	if len(layer.Cells) < 1 {
+		return nil, fmt.Errorf("no cells found on sprite %s layer %s", wData.Tilemap.spriteName, wData.Tilemap.layerName)
+	}
+
 	n := &World{
-		image: layer.Cells[0].EbitenImage,
-		layer: layer,
+		entityID:  entity.NextEntityID(),
+		image:     layer.Cells[0].EbitenImage,
+		layer:     layer,
+		collision: cLayer.Cells[0].EbitenImage,
 	}
 	n.image = ebiten.NewImage(int(layer.SpriteWidth), int(layer.SpriteHeight))
 
@@ -64,7 +75,9 @@ func (n *World) IsHit(x, y float64) bool {
 		return false
 	}
 	return true*/
-	return n.image.At(int(x), int(y)).(color.RGBA).A > 0
+	x -= camera.X
+	y -= camera.Y
+	return n.collision.At(int(x), int(y)).(color.RGBA).A > 0
 	//return s.image.At(x-s.x, y-s.y).(color.RGBA).A > 0
 }
 

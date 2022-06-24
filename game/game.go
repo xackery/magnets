@@ -9,12 +9,14 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/rs/zerolog/log"
 	"github.com/xackery/magnets/bullet"
 	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/collision"
 	"github.com/xackery/magnets/font"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/input"
+	"github.com/xackery/magnets/item"
 	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/npc"
 	"github.com/xackery/magnets/player"
@@ -35,11 +37,12 @@ const (
 
 // Game implements the ebiten Game interface
 type Game struct {
-	ctx              context.Context
-	cancel           context.CancelFunc
-	resolutionChange time.Time
-	frame            int64
-	nextFrame        time.Time
+	ctx               context.Context
+	cancel            context.CancelFunc
+	resolutionChange  time.Time
+	frame             int64
+	nextFrame         time.Time
+	resetGameCooldown time.Time
 }
 
 // New creates a new game instance
@@ -83,17 +86,36 @@ func New(ctx context.Context, host string) (*Game, error) {
 		}
 	}
 
-	npc.New(npc.NpcBat, 20, 0)
-	npc.New(npc.NpcCloud, 40, 0)
-	npc.New(npc.NpcFlower, 60, 0)
-	npc.New(npc.NpcAseprite, 80, 0)
-	npc.New(npc.NpcPot, 100, 0)
-	npc.New(npc.NpcKnight, 120, 0)
+	g.clear()
+	err = g.start()
+	if err != nil {
+		return nil, fmt.Errorf("start: %w", err)
+	}
+
+	Instance = g
+	return g, nil
+}
+
+func (g *Game) clear() {
+	npc.Clear()
+	player.Clear()
+	world.Clear()
+	bullet.Clear()
+	item.Clear()
+}
+
+func (g *Game) start() error {
 
 	p, err := player.New("player", "default")
 	if err != nil {
-		return nil, fmt.Errorf("player new player: %w", err)
+		return fmt.Errorf("player new player: %w", err)
 	}
+	/*npc.New(npc.NpcBat, 20, 0, p)
+	npc.New(npc.NpcCloud, 40, 0, p)
+	npc.New(npc.NpcFlower, 60, 0, p)
+	npc.New(npc.NpcAseprite, 80, 0, p)
+	npc.New(npc.NpcPot, 100, 0, p)
+	npc.New(npc.NpcKnight, 120, 0, p)*/
 
 	weapons := []int{
 		//weapon.WeaponArrow,
@@ -109,11 +131,11 @@ func New(ctx context.Context, host string) (*Game, error) {
 
 	_, err = world.New(world.WorldGrass)
 	if err != nil {
-		return nil, fmt.Errorf("world.New: %w", err)
+		return fmt.Errorf("world.New: %w", err)
 	}
-	g.Layout(global.ScreenWidth(), global.ScreenHeight())
-	Instance = g
-	return g, nil
+
+	global.ScreenOnLayoutChange(global.ScreenWidth(), global.ScreenHeight(), true)
+	return nil
 }
 
 // Draw is called for render update
@@ -126,6 +148,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	world.Draw(screen)
 	npc.Draw(collision.Image)
+	item.Draw(screen)
 	bullet.Draw(screen)
 	player.Draw(collision.Image)
 
@@ -137,7 +160,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 // Layout takes the outside size (e.g., the window size) and returns the (logical) screen size.
 // If you don't have to adjust the screen size with the outside size, just return a fixed size.
 func (g *Game) Layout(x, y int) (int, int) {
-	global.ScreenOnLayoutChange(x, y)
+	global.ScreenOnLayoutChange(x, y, false)
 	return x, y
 }
 
@@ -156,8 +179,19 @@ func (g *Game) Update() error {
 	ebiten.CurrentTPS()
 
 	input.Update()
+	if ebiten.IsKeyPressed(ebiten.KeyR) && time.Now().After(g.resetGameCooldown) {
+		g.resetGameCooldown = time.Now().Add(3 * time.Second)
+		g.clear()
+		err := g.start()
+		if err != nil {
+			log.Debug().Err(err).Msgf("start")
+		}
+
+		return nil
+	}
 	bullet.Update()
 	player.Update()
+	item.Update()
 	if !player.IsDead() {
 		npc.Update(player.X(), player.Y())
 	}

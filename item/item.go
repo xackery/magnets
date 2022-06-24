@@ -1,36 +1,37 @@
-package npc
+package item
 
 import (
 	"fmt"
-	"image/color"
 	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/rs/zerolog/log"
 	"github.com/xackery/aseprite"
 	"github.com/xackery/magnets/camera"
-	"github.com/xackery/magnets/collision"
 	"github.com/xackery/magnets/entity"
 	"github.com/xackery/magnets/global"
-	"github.com/xackery/magnets/item"
 	"github.com/xackery/magnets/library"
 )
 
-type Npc struct {
-	hid        string
-	entityID   uint
-	layer      *aseprite.Layer
-	image      *ebiten.Image
-	maxHP      int
-	hp         int
-	player     entity.Entiter
-	spriteName string
-	layerName  string
-	x          float64
-	y          float64
-	animation  animation
-	moveSpeed  float64
+type Item struct {
+	hid         string
+	entityID    uint
+	layer       *aseprite.Layer
+	image       *ebiten.Image
+	spriteName  string
+	layerName   string
+	Data        *ItemData
+	x           float64
+	y           float64
+	spawnX      float64
+	spawnY      float64
+	player      entity.Entiter
+	animation   animation
+	hookX       float64
+	hookY       float64
+	isHooked    bool
+	isAttracted bool
+	isDead      bool
 }
 
 type animation struct {
@@ -40,14 +41,13 @@ type animation struct {
 	isPingPongToggle bool
 }
 
-func New(npcType int, x float64, y float64, player entity.Entiter) (*Npc, error) {
-	npcData, ok := npcTypes[npcType]
+func New(itemType int, x, y float64, player entity.Entiter) (*Item, error) {
+	data, ok := itemTypes[itemType]
 	if !ok {
-		return nil, fmt.Errorf("npc type %d not found", npcType)
+		return nil, fmt.Errorf("unknown item type %d", itemType)
 	}
-
 	name := "base"
-	layer, err := library.Layer(npcData.Sprite.spriteName, npcData.Sprite.layerName)
+	layer, err := library.Layer(data.SpriteName, data.LayerName)
 	if err != nil {
 		return nil, fmt.Errorf("library.Layer: %w", err)
 	}
@@ -55,12 +55,10 @@ func New(npcType int, x float64, y float64, player entity.Entiter) (*Npc, error)
 		return nil, fmt.Errorf("no cells found on layer %s", name)
 	}
 
-	n := &Npc{
-		spriteName: npcData.Sprite.spriteName,
-		layerName:  npcData.Sprite.layerName,
-		hp:         npcData.MaxHP,
-		maxHP:      npcData.MaxHP,
-		moveSpeed:  npcData.MoveSpeed,
+	n := &Item{
+		Data:       data,
+		spriteName: data.SpriteName,
+		layerName:  data.LayerName,
 		x:          x,
 		y:          y,
 		layer:      layer,
@@ -74,7 +72,7 @@ func New(npcType int, x float64, y float64, player entity.Entiter) (*Npc, error)
 		return nil, fmt.Errorf("SetAnimation %s: %w", "walk", err)
 	}
 
-	npcs = append(npcs, n)
+	items = append(items, n)
 	err = entity.Register(n)
 	if err != nil {
 		return nil, fmt.Errorf("entity.Register: %w", err)
@@ -82,17 +80,26 @@ func New(npcType int, x float64, y float64, player entity.Entiter) (*Npc, error)
 	return n, nil
 }
 
-func (n *Npc) IsHit(x, y float64) bool {
+func (n *Item) IsHit(x, y float64) bool {
 	if n.IsDead() {
 		return false
 	}
-	return n.image.At(int(x-n.x), int(y-n.y)).(color.RGBA).A > 0
+	if n.x-(float64(n.layer.SpriteWidth)/2) > x {
+		return false
+	}
+	if n.x+(float64(n.layer.SpriteWidth)/2) < x {
+		return false
+	}
+	if n.y-(float64(n.layer.SpriteHeight)/2) > y {
+		return false
+	}
+	if n.y+(float64(n.layer.SpriteHeight)/2) < y {
+		return false
+	}
+	return true
 }
 
-func (n *Npc) Draw(screen *ebiten.Image) error {
-	if n.IsDead() {
-		return nil
-	}
+func (n *Item) Draw(screen *ebiten.Image) error {
 	n.animationStep()
 	if len(n.layer.Cells) <= int(n.animation.index) {
 		return fmt.Errorf("animationIndex %d is out of bounds for body cells %d", n.animation.index, len(n.layer.Cells))
@@ -101,15 +108,13 @@ func (n *Npc) Draw(screen *ebiten.Image) error {
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(-float64(n.layer.SpriteWidth/2), -float64(n.layer.SpriteHeight/2))
-	op.GeoM.Translate(camera.X, camera.Y)
 	op.GeoM.Translate(float64(c.PositionX), float64(c.PositionY))
 	op.GeoM.Translate(n.x, n.y)
+	op.GeoM.Translate(camera.X, camera.Y)
 	op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
 
 	if n.IsDead() {
 		op.ColorM.Scale(1, 1, 1, 0.6)
-	} else if n.hp <= (n.maxHP / 2) {
-		op.ColorM.Scale(1, 0.5, 0.5, 1)
 	} else {
 		op.ColorM.Scale(1, 1, 1, 1)
 	}
@@ -138,52 +143,16 @@ func (n *Npc) Draw(screen *ebiten.Image) error {
 	if n.IsDead() {
 		return nil
 	}
-	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
-	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
-	/*x := n.x
+	x := n.x
 	y := n.y + 30
 	x -= float64(n.SWidth() / 2)
-	y += float64(n.SHeight() / 2)*/
+	y += float64(n.SHeight() / 2)
 
 	return nil
 }
 
-func (n *Npc) Update(playerX, playerY float64) {
-
-	if !isAIEnabled {
-		return
-	}
-
-	x := playerX - n.x
-	y := playerY - n.y
-
-	if x > 0 && x > n.moveSpeed {
-		x = n.moveSpeed
-	}
-	if x < 0 && -x > -n.moveSpeed {
-		x = -n.moveSpeed
-	}
-
-	if y > 0 && y > n.moveSpeed {
-		y = n.moveSpeed
-	}
-	if y < 0 && -y > -n.moveSpeed {
-		y = -n.moveSpeed
-	}
-
-	targetX := n.x + x
-	targetY := n.y + y
-
-	if collision.Image.At(int(targetX), int(targetY)).(color.RGBA).A == 0 {
-		n.x += x
-		n.y += y
-		return
-	}
-
-}
-
-// SetAnimation sets the animation of the npc
-func (n *Npc) SetAnimation(name string) error {
+// SetAnimation sets the animation of the item
+func (n *Item) SetAnimation(name string) error {
 	name = strings.ToLower(name)
 	tag, err := library.Tag(n.spriteName, name)
 	if err != nil {
@@ -194,7 +163,7 @@ func (n *Npc) SetAnimation(name string) error {
 	return nil
 }
 
-func (n *Npc) animationStep() {
+func (n *Item) animationStep() {
 	if n.IsDead() {
 		return
 	}
@@ -235,61 +204,86 @@ func (n *Npc) animationStep() {
 	n.animation.delay = time.Now().Add(time.Duration(c.Duration) * time.Millisecond)
 }
 
-func (n *Npc) SetPosition(x, y float64) {
+func (n *Item) SetPosition(x, y float64) {
 	n.x, n.y = x, y
 }
 
-func (n *Npc) Position() (float64, float64) {
+func (n *Item) Position() (float64, float64) {
 	return n.x, n.y
 }
 
-func (n *Npc) HID() string {
+func (n *Item) HID() string {
 	return n.hid
 }
 
-func (n *Npc) Damage(damage int) bool {
-
-	n.hp -= damage
-	if n.hp < 1 {
-		n.hp = 0
-		_, err := item.New(item.ItemRupee, n.x, n.y, n.player)
-		if err != nil {
-			log.Debug().Err(err).Msgf("item new rupee")
-		}
-		return true
-	}
-
-	return false
+func (n *Item) IsDead() bool {
+	return n.isDead
 }
 
-func (n *Npc) IsDead() bool {
-	return n.hp < 1
-}
-
-func (n *Npc) EntityID() uint {
+func (n *Item) EntityID() uint {
 	return n.entityID
 }
 
-func (n *Npc) SWidth() int {
+func (n *Item) SWidth() int {
 	return int(n.layer.SpriteWidth * uint16(global.ScreenScaleX()))
 }
 
-func (n *Npc) SHeight() int {
+func (n *Item) SHeight() int {
 	return int(n.layer.SpriteHeight * uint16(global.ScreenScaleY()))
 }
 
-func (n *Npc) AnimationAttack() error {
+func (n *Item) AnimationAttack() error {
 	return nil
 }
 
-func (n *Npc) AnimationGotHit() error {
+func (n *Item) AnimationGotHit() error {
 	return nil
 }
 
-func (n *Npc) X() float64 {
+func (n *Item) X() float64 {
 	return n.x
 }
 
-func (n *Npc) Y() float64 {
+func (n *Item) Y() float64 {
 	return n.y
+}
+
+func (n *Item) move() {
+
+	maxMove := float64(2)
+	if global.Distance(n.x, n.y, n.player.X(), n.player.Y()) < 20 {
+		if !n.isHooked {
+			n.hookX = n.x
+			n.hookY = n.y
+			n.isHooked = true
+		}
+
+		dx := n.x - n.player.X()
+		if dx > maxMove {
+			dx = maxMove
+		}
+		if dx < -maxMove {
+			dx = -maxMove
+		}
+
+		dy := n.y - n.player.Y()
+		if dy > maxMove {
+			dy = maxMove
+		}
+		if dy < -maxMove {
+			dy = -maxMove
+		}
+
+		if !n.isAttracted {
+			if global.Distance(n.hookX, n.hookY, n.x, n.x) < 20 {
+				n.x += dx
+				n.y += dy
+				return
+			}
+			n.isAttracted = true
+		}
+
+		n.x -= dx
+		n.y -= dy
+	}
 }

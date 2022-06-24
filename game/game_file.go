@@ -11,5 +11,8 @@ var (
 		"player.aseprite",
 		"crystal.aseprite",
 		"world-1.aseprite",
+		"hit.wav",
+		"rupee.aseprite",
+		"rupee.wav",
 	}
 )

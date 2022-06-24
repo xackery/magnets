@@ -94,7 +94,7 @@ func Update(playerX, playerY float64) {
 					rX := -100 + rand.Float64()*(100-200)
 					rY := -100 + rand.Float64()*(100-200)*/
 
-				New(NpcBat, playerY+math.Sin(theta)*distance, playerX+math.Cos(theta)*distance)
+				New(rand.Intn(6-1)+1, playerY+math.Sin(theta)*distance, playerX+math.Cos(theta)*distance, global.Player)
 			}
 			log.Debug().Msgf("spawned %d", spawnCount)
 		}

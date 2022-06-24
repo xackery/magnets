@@ -5,7 +5,9 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/rs/zerolog/log"
 	"github.com/xackery/magnets/global"
+	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/npc"
 )
 
@@ -69,6 +71,7 @@ func Update() {
 }
 
 func HitUpdate() {
+	var err error
 	isCleanupNeeded := false
 
 	for _, b := range bullets {
@@ -85,6 +88,10 @@ func HitUpdate() {
 				n := npc.At(b.x+float64(x), b.y+float64(y))
 				if n == nil {
 					continue
+				}
+				err = library.AudioPlay("hit")
+				if err != nil {
+					log.Debug().Err(err).Msgf("audioplay hit")
 				}
 				n.Damage(b.damage)
 				if !b.isImmortal {
