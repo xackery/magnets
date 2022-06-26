@@ -5,7 +5,6 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/rs/zerolog/log"
 	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/item"
@@ -94,7 +93,7 @@ func HitUpdate() {
 				i := item.Pickup(p.x+float64(x), p.y+float64(y))
 				if i != nil {
 					if i.Data.SpriteName == "rupee" {
-						log.Debug().Msgf("gained %d exp", i.Data.Value)
+						p.addExp(1)
 					}
 				}
 			}
@@ -131,6 +130,11 @@ func onResolutionChange() {
 	if len(players) > 0 {
 		camera.X -= players[0].x
 		camera.Y -= players[0].y
+	}
+
+	for _, n := range players {
+		n.expBar.SetWidth(float64(global.ScreenWidth()))
+		n.expBar.SetHeight(16)
 	}
 
 }

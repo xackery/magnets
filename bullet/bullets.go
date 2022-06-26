@@ -3,12 +3,14 @@ package bullet
 import (
 	"fmt"
 	"image/color"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/npc"
+	"github.com/xackery/magnets/score"
 )
 
 var (
@@ -62,11 +64,23 @@ func Draw(screen *ebiten.Image) error {
 }
 
 func Update() {
+	isCleanupNeeded := false
 	for _, b := range bullets {
 		if b.IsDead() {
 			continue
 		}
+
+		if time.Now().After(b.lifespan) {
+			b.isDead = true
+			isCleanupNeeded = true
+			continue
+		}
+
 		b.bulletMove()
+	}
+
+	if isCleanupNeeded {
+		cleanupDead()
 	}
 }
 
@@ -93,7 +107,10 @@ func HitUpdate() {
 				if err != nil {
 					log.Debug().Err(err).Msgf("audioplay hit")
 				}
-				n.Damage(b.damage)
+				score.AddDamage(b.data.SourceWeaponType, b.data.Damage)
+				if n.Damage(b.data.Damage) {
+					score.AddKill(b.data.SourceWeaponType)
+				}
 				if !b.isImmortal {
 					b.isDead = true
 				}

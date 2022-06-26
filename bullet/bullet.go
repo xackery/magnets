@@ -21,7 +21,8 @@ type Bullet struct {
 	image        *ebiten.Image
 	behaviorType int
 	direction    int
-	damage       int
+	lifespan     time.Time
+	data         *BulletData
 	spriteName   string
 	layerName    string
 	rotation     float64
@@ -36,6 +37,7 @@ type Bullet struct {
 	isImmortal   bool //will the bullet die on impact
 	isReturning  bool // For behaviors that go to and fro, this is the returning flag
 	moveSpeed    float64
+	spawnCount   int // number of bullets of type spawned when this initially appeared
 }
 
 type animation struct {
@@ -45,7 +47,7 @@ type animation struct {
 	isPingPongToggle bool
 }
 
-func New(b *BulletData, player entity.Entiter, direction int) (*Bullet, error) {
+func New(b *BulletData, player entity.Entiter, direction int, lifespan time.Time, spawnCount int) (*Bullet, error) {
 	name := "base"
 	layer, err := library.Layer(b.SpriteName, b.LayerName)
 	if err != nil {
@@ -56,11 +58,12 @@ func New(b *BulletData, player entity.Entiter, direction int) (*Bullet, error) {
 	}
 
 	n := &Bullet{
-		damage:       b.Damage,
+		data:         b,
 		player:       player,
 		spriteName:   b.SpriteName,
 		layerName:    b.LayerName,
 		direction:    direction,
+		lifespan:     lifespan,
 		behaviorType: b.BehaviorType,
 		layer:        layer,
 		entityID:     entity.NextEntityID(),
@@ -68,11 +71,17 @@ func New(b *BulletData, player entity.Entiter, direction int) (*Bullet, error) {
 		distance:     b.Distance,
 		moveSpeed:    b.MoveSpeed,
 		isImmortal:   b.IsImmortal,
+		spawnCount:   spawnCount,
 	}
-	n.x = player.X() // + float64(player.SWidth()/4)
-	n.y = player.Y() // + float64(player.SHeight()/4)
+	n.x = player.X() + b.OffsetX // + float64(player.SWidth()/4)
+	n.y = player.Y() + b.OffsetY // + float64(player.SHeight()/4)
+
 	n.spawnX = n.x
 	n.spawnY = n.y
+
+	if b.BehaviorType == BehaviorCircle {
+		n.rotation = float64(spawnCount) * 0.2
+	}
 
 	err = n.SetAnimation("walk")
 	if err != nil {

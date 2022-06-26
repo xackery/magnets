@@ -20,7 +20,8 @@ import (
 	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/npc"
 	"github.com/xackery/magnets/player"
-	"github.com/xackery/magnets/weapon"
+	"github.com/xackery/magnets/ui/bar"
+	"github.com/xackery/magnets/ui/equipment"
 	"github.com/xackery/magnets/world"
 	"golang.org/x/image/font/gofont/goregular"
 )
@@ -102,13 +103,15 @@ func (g *Game) clear() {
 	world.Clear()
 	bullet.Clear()
 	item.Clear()
+	equipment.Clear()
+	bar.Clear()
 }
 
 func (g *Game) start() error {
 
-	p, err := player.New("player", "default")
+	_, err := player.New("hero", "base")
 	if err != nil {
-		return fmt.Errorf("player new player: %w", err)
+		return fmt.Errorf("player new hero: %w", err)
 	}
 	/*npc.New(npc.NpcBat, 20, 0, p)
 	npc.New(npc.NpcCloud, 40, 0, p)
@@ -116,18 +119,6 @@ func (g *Game) start() error {
 	npc.New(npc.NpcAseprite, 80, 0, p)
 	npc.New(npc.NpcPot, 100, 0, p)
 	npc.New(npc.NpcKnight, 120, 0, p)*/
-
-	weapons := []int{
-		//weapon.WeaponArrow,
-		//weapon.WeaponBoomerang,
-		//weapon.WeaponShuriken,
-		//weapon.WeaponSpear,
-		//weapon.WeaponSword,
-	}
-	for _, w := range weapons {
-		wp, _ := weapon.New(w)
-		p.WeaponAdd(wp)
-	}
 
 	_, err = world.New(world.WorldGrass)
 	if err != nil {
@@ -153,7 +144,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	player.Draw(collision.Image)
 
 	screen.DrawImage(collision.Image, nil)
-
+	bar.Draw(screen)
+	equipment.Draw(screen)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f, Position: %0.2f, %0.2f, Camera: %0.2f, %0.2f", ebiten.CurrentTPS(), player.X(), player.Y(), camera.X, camera.Y), 0, global.ScreenHeight()-14)
 }
 
@@ -193,7 +185,7 @@ func (g *Game) Update() error {
 	player.Update()
 	item.Update()
 	if !player.IsDead() {
-		npc.Update(player.X(), player.Y())
+		npc.Update()
 	}
 
 	if g.frame%2 == 0 {

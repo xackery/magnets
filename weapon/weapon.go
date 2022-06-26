@@ -7,11 +7,6 @@ import (
 	"github.com/xackery/magnets/bullet"
 )
 
-const (
-	None = iota
-	Boomerang
-)
-
 type Weapon struct {
 	Data       *WeaponData
 	Cooldown   time.Time
@@ -33,11 +28,11 @@ func New(weaponType int) (*Weapon, error) {
 	return weapon, nil
 }
 
-func (n *Weapon) Delay() time.Duration {
-	return n.Data.Delay
-}
-
-// Shoot fires a bullet, this sets cooldowns
-func (n *Weapon) Shoot() {
-	n.Cooldown = time.Now().Add(n.Data.Delay)
+// Name returns a string form of a weapon's name, based on provided weaponType
+func Name(weaponType int) string {
+	weaponData, ok := weaponTypes[weaponType]
+	if !ok {
+		return "Unknown"
+	}
+	return weaponData.name
 }

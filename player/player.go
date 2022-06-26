@@ -15,24 +15,30 @@ import (
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/input"
 	"github.com/xackery/magnets/library"
+	"github.com/xackery/magnets/score"
+	"github.com/xackery/magnets/ui/bar"
 	"github.com/xackery/magnets/weapon"
 )
 
 type Player struct {
-	hid        string
-	entityID   uint
-	layer      *aseprite.Layer
-	image      *ebiten.Image
-	maxHP      int
-	hp         int
-	spriteName string
-	layerName  string
-	x          float64
-	y          float64
-	isLastLeft bool
-	animation  animation
-	direction  int
-	weapons    map[int]*weapon.Weapon
+	hid                   string
+	entityID              uint
+	layer                 *aseprite.Layer
+	image                 *ebiten.Image
+	maxHP                 int
+	hp                    int
+	spriteName            string
+	layerName             string
+	x                     float64
+	y                     float64
+	exp                   int
+	level                 int
+	expBar                *bar.Bar
+	isLastLeft            bool
+	animation             animation
+	direction             int
+	weapons               map[int]*weapon.Weapon
+	weaponUpgradeCooldown time.Time
 }
 
 type animation struct {
@@ -43,7 +49,7 @@ type animation struct {
 }
 
 func New(spriteName string, layerName string) (*Player, error) {
-	name := "base"
+	name := "walk"
 	layer, err := library.Layer(spriteName, layerName)
 	if err != nil {
 		return nil, fmt.Errorf("library.Layer: %w", err)
@@ -57,6 +63,7 @@ func New(spriteName string, layerName string) (*Player, error) {
 		layerName:  layerName,
 		hp:         1,
 		maxHP:      1,
+		level:      1,
 		direction:  global.DirectionRight,
 		layer:      layer,
 		entityID:   entity.NextEntityID(),
@@ -65,9 +72,10 @@ func New(spriteName string, layerName string) (*Player, error) {
 	}
 	global.Player = n
 
-	err = n.SetAnimation("left")
+	tag := "walk"
+	err = n.SetAnimation(tag)
 	if err != nil {
-		return nil, fmt.Errorf("SetAnimation %s: %w", "left", err)
+		return nil, fmt.Errorf("SetAnimation %s: %w", tag, err)
 	}
 
 	players = append(players, n)
@@ -75,6 +83,14 @@ func New(spriteName string, layerName string) (*Player, error) {
 	if err != nil {
 		return nil, fmt.Errorf("entity.Register: %w", err)
 	}
+
+	n.expBar, err = bar.New("bar", "exp")
+	if err != nil {
+		return nil, fmt.Errorf("bar.New: %w", err)
+	}
+	n.expBar.SetText(fmt.Sprintf("%d", n.level))
+	n.expBar.SetWidth(float64(global.ScreenWidth()))
+	n.expBar.SetHeight(16)
 	return n, nil
 }
 
@@ -112,7 +128,12 @@ func (n *Player) Draw(screen *ebiten.Image) error {
 		op.GeoM.Translate(float64(n.layer.SpriteWidth/2), 0)
 	}
 	op.GeoM.Translate(-float64(n.layer.SpriteWidth/2), -float64(n.layer.SpriteHeight/2))
-	op.GeoM.Translate(float64(c.PositionX), float64(c.PositionY))
+	if n.isLastLeft {
+		op.GeoM.Translate(float64(-c.PositionX), float64(c.PositionY))
+		op.GeoM.Translate(float64(n.layer.SpriteWidth/2), 0)
+	} else {
+		op.GeoM.Translate(float64(c.PositionX), float64(c.PositionY))
+	}
 	op.GeoM.Translate(float64(camera.X), float64(camera.Y))
 	op.GeoM.Translate(float64(n.x), float64(n.y))
 	op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
@@ -216,13 +237,71 @@ func (n *Player) animationStep() {
 
 func (n *Player) Update() {
 
-	if input.IsPressed(ebiten.Key1) {
-		w, err := weapon.New(weapon.WeaponArrow)
-		if err != nil {
-			fmt.Println("weapon new:", err)
-			os.Exit(1)
+	if input.IsPressed(ebiten.Key1) && time.Now().After(n.weaponUpgradeCooldown) {
+		n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
+		n.addExp(5)
+		if n.hasWeapon(weapon.WeaponCrystal) {
+			n.weaponUpgrade(weapon.WeaponCrystal)
+		} else {
+			w, err := weapon.New(weapon.WeaponCrystal)
+			if err != nil {
+				fmt.Println("weapon new:", err)
+				os.Exit(1)
+			}
+			err = n.weaponAdd(w)
+			if err != nil {
+				log.Error().Err(err).Msgf("weaponAdd")
+			}
 		}
-		n.WeaponAdd(w)
+	}
+	if input.IsPressed(ebiten.Key2) && time.Now().After(n.weaponUpgradeCooldown) {
+		n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
+		if n.hasWeapon(weapon.WeaponBoomerang) {
+			n.weaponUpgrade(weapon.WeaponBoomerang)
+		} else {
+			w, err := weapon.New(weapon.WeaponBoomerang)
+			if err != nil {
+				fmt.Println("weapon new:", err)
+				os.Exit(1)
+			}
+			err = n.weaponAdd(w)
+			if err != nil {
+				log.Error().Err(err).Msgf("weaponAdd")
+			}
+		}
+	}
+	if input.IsPressed(ebiten.Key3) && time.Now().After(n.weaponUpgradeCooldown) {
+		n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
+		if n.hasWeapon(weapon.WeaponMagneticGloves) {
+			n.weaponUpgrade(weapon.WeaponMagneticGloves)
+		} else {
+			w, err := weapon.New(weapon.WeaponMagneticGloves)
+			if err != nil {
+				fmt.Println("weapon new:", err)
+				os.Exit(1)
+			}
+			err = n.weaponAdd(w)
+			if err != nil {
+				log.Error().Err(err).Msgf("weaponAdd")
+			}
+		}
+	}
+
+	if input.IsPressed(ebiten.Key4) && time.Now().After(n.weaponUpgradeCooldown) {
+		n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
+		if n.hasWeapon(weapon.WeaponHammer) {
+			n.weaponUpgrade(weapon.WeaponHammer)
+		} else {
+			w, err := weapon.New(weapon.WeaponHammer)
+			if err != nil {
+				fmt.Println("weapon new:", err)
+				os.Exit(1)
+			}
+			err = n.weaponAdd(w)
+			if err != nil {
+				log.Error().Err(err).Msgf("weaponAdd")
+			}
+		}
 	}
 
 	isMoving := input.IsPlayerMoving()
@@ -280,6 +359,8 @@ func (n *Player) Update() {
 			camera.Y += delta
 			n.y -= delta
 		}
+	} else {
+		n.animation.index = 0
 	}
 
 	n.weaponUpdate()
@@ -298,9 +379,20 @@ func (n *Player) HID() string {
 }
 
 func (n *Player) Damage(damage int) bool {
+	if n.hp < 1 {
+		return false
+	}
 	n.hp -= damage
 	if n.hp < 1 {
 		log.Debug().Msgf("player got killed")
+		for i := 0; i < weapon.WeaponMax; i++ {
+			dmg := score.Damage(i)
+			if dmg > 0 {
+				log.Debug().Msgf("%s damage: %d", weapon.Name(i), dmg)
+				log.Debug().Msgf("%s kills: %d", weapon.Name(i), score.Kills(i))
+			}
+		}
+
 		n.hp = 0
 		return true
 	}
@@ -337,4 +429,33 @@ func (n *Player) X() float64 {
 
 func (n *Player) Y() float64 {
 	return n.y
+}
+
+func (n *Player) maxExp() int {
+	return n.level * 10
+}
+
+func (n *Player) addExp(value int) {
+	n.exp += value
+	if n.exp >= n.maxExp() {
+		n.exp = 0
+		n.level++
+		err := library.AudioPlay("levelup")
+		n.expBar.SetText(fmt.Sprintf("%d", n.level))
+		log.Debug().Msgf("player is now level %d", n.level)
+		if err != nil {
+			log.Error().Err(err).Msgf("play levelup")
+		}
+	}
+	log.Debug().Msgf("%0.2f %d/%d", float64(n.exp)/float64(n.maxExp()), n.exp, n.maxExp())
+	n.expBar.SetPercent(float64(n.exp) / float64(n.maxExp()))
+}
+
+func (n *Player) AttractionRange() float64 {
+	dist := float64(20)
+	w, ok := n.weapons[weapon.WeaponMagneticGloves]
+	if !ok {
+		return dist
+	}
+	return float64(dist + float64(w.Level*10))
 }

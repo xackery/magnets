@@ -13,6 +13,7 @@ func (n *Bullet) bulletMove() {
 	n.bulletLinear()
 	n.bulletBoomerang()
 	n.bulletCircle()
+	n.bulletLasso()
 }
 
 func (n *Bullet) bulletLinear() {
@@ -88,4 +89,25 @@ func (n *Bullet) bulletCircle() {
 	if n.rotation >= 2 {
 		n.rotation = 0
 	}
+}
+
+func (n *Bullet) bulletLasso() {
+	if n.behaviorType != BehaviorLasso {
+		return
+	}
+
+	if n.rotation == 0 {
+		//n.rotation = -math.Sqrt(3)
+	}
+	t := n.rotation
+	n.x = n.player.X() + 3*t - math.Pow(t, 3)
+	n.y = n.player.Y() + 3*math.Pow(t, 2)
+	//rotation := 9 * t / (3 - 3*math.Pow(t, 2))
+	n.rotation += 0.2
+
+	/*theta := n.rotation * math.Pi
+	n.x = n.spawnX + math.Sin(theta)*n.distance
+	n.y = n.spawnY + math.Cos(theta)*n.distance
+
+	n.rotation += n.moveSpeed * 0.01*/
 }

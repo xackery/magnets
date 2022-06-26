@@ -65,7 +65,7 @@ func Draw(screen *ebiten.Image) error {
 	return nil
 }
 
-func Update(playerX, playerY float64) {
+func Update() {
 	if input.IsPressed(ebiten.KeyGraveAccent) && time.Now().After(isAIEnabledCooldown) {
 		isAIEnabled = !isAIEnabled
 		log.Debug().Msgf("AI is now %t", isAIEnabled)
@@ -73,7 +73,7 @@ func Update(playerX, playerY float64) {
 	}
 
 	for _, p := range npcs {
-		p.Update(playerX, playerY)
+		p.Update()
 	}
 	if isAIEnabled {
 		if time.Now().After(spawnerCooldown) {
@@ -82,19 +82,20 @@ func Update(playerX, playerY float64) {
 				return
 			}
 			spawnCount := spawnMax + 1 - len(npcs)
-			maxDistance := global.ScreenSmallestDimension() / 2
-			minDistance := global.ScreenSmallestDimension() / 2.5
+			if spawnCount > 3 {
+				spawnerCooldown = time.Now().Add(500 * time.Millisecond)
+				spawnCount = 3
+			}
+			maxDistance := float64(300)
+			minDistance := float64(200)
+
 			for i := 0; i < spawnCount; i++ {
 
-				theta := rand.Float64() * (math.Pi * 2) * math.Pi
+				theta := rand.Float64() * 6
 
-				distance := (rand.Float64() * (maxDistance - minDistance)) + minDistance
-				//fmt.Println("distance", distance, global.ScreenSmallestDimension())
-				/*
-					rX := -100 + rand.Float64()*(100-200)
-					rY := -100 + rand.Float64()*(100-200)*/
+				distance := minDistance + (rand.Float64() * (maxDistance - minDistance))
 
-				New(rand.Intn(6-1)+1, playerY+math.Sin(theta)*distance, playerX+math.Cos(theta)*distance, global.Player)
+				New(rand.Intn(6-1)+1, global.Player.X()+math.Sin(theta)*distance, global.Player.Y()+math.Cos(theta)*distance, global.Player)
 			}
 			log.Debug().Msgf("spawned %d", spawnCount)
 		}

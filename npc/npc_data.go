@@ -19,7 +19,6 @@ type NpcData struct {
 	Sprite    *SpriteData
 	MoveSpeed float64
 }
-
 type SpriteData struct {
 	spriteName string
 	layerName  string
@@ -28,24 +27,24 @@ type SpriteData struct {
 func init() {
 	npcTypes = make(map[int]*NpcData)
 	npcTypes[NpcBat] = &NpcData{
-		MaxHP:     5,
-		MoveSpeed: 0.1,
+		MaxHP:     10,
+		MoveSpeed: 0.2,
 		Sprite: &SpriteData{
 			spriteName: "flying",
 			layerName:  "bat",
 		},
 	}
 	npcTypes[NpcCloud] = &NpcData{
-		MaxHP:     5,
-		MoveSpeed: 0.1,
+		MaxHP:     15,
+		MoveSpeed: 0.2,
 		Sprite: &SpriteData{
 			spriteName: "flying",
 			layerName:  "cloud",
 		},
 	}
 	npcTypes[NpcFlower] = &NpcData{
-		MaxHP:     5,
-		MoveSpeed: 0.1,
+		MaxHP:     10,
+		MoveSpeed: 0.2,
 		Sprite: &SpriteData{
 			spriteName: "land",
 			layerName:  "flower",
@@ -53,8 +52,8 @@ func init() {
 	}
 
 	npcTypes[NpcAseprite] = &NpcData{
-		MaxHP:     5,
-		MoveSpeed: 0.1,
+		MaxHP:     20,
+		MoveSpeed: 0.2,
 		Sprite: &SpriteData{
 			spriteName: "land",
 			layerName:  "aseprite",
@@ -62,15 +61,15 @@ func init() {
 	}
 	npcTypes[NpcPot] = &NpcData{
 		MaxHP:     5,
-		MoveSpeed: 0.1,
+		MoveSpeed: 0.2,
 		Sprite: &SpriteData{
 			spriteName: "land",
 			layerName:  "pot",
 		},
 	}
 	npcTypes[NpcKnight] = &NpcData{
-		MaxHP:     5,
-		MoveSpeed: 0.1,
+		MaxHP:     30,
+		MoveSpeed: 0.2,
 		Sprite: &SpriteData{
 			spriteName: "land",
 			layerName:  "knight",

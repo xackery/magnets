@@ -25,7 +25,6 @@ type Item struct {
 	y           float64
 	spawnX      float64
 	spawnY      float64
-	player      entity.Entiter
 	animation   animation
 	hookX       float64
 	hookY       float64
@@ -41,7 +40,7 @@ type animation struct {
 	isPingPongToggle bool
 }
 
-func New(itemType int, x, y float64, player entity.Entiter) (*Item, error) {
+func New(itemType int, x, y float64) (*Item, error) {
 	data, ok := itemTypes[itemType]
 	if !ok {
 		return nil, fmt.Errorf("unknown item type %d", itemType)
@@ -62,7 +61,6 @@ func New(itemType int, x, y float64, player entity.Entiter) (*Item, error) {
 		x:          x,
 		y:          y,
 		layer:      layer,
-		player:     player,
 		entityID:   entity.NextEntityID(),
 		image:      layer.Cells[0].EbitenImage,
 	}
@@ -251,14 +249,14 @@ func (n *Item) Y() float64 {
 func (n *Item) move() {
 
 	maxMove := float64(2)
-	if global.Distance(n.x, n.y, n.player.X(), n.player.Y()) < 20 {
+	if global.Distance(n.x, n.y, global.Player.X(), global.Player.Y()) < global.Player.AttractionRange() {
 		if !n.isHooked {
 			n.hookX = n.x
 			n.hookY = n.y
 			n.isHooked = true
 		}
 
-		dx := n.x - n.player.X()
+		dx := n.x - global.Player.X()
 		if dx > maxMove {
 			dx = maxMove
 		}
@@ -266,21 +264,12 @@ func (n *Item) move() {
 			dx = -maxMove
 		}
 
-		dy := n.y - n.player.Y()
+		dy := n.y - global.Player.Y()
 		if dy > maxMove {
 			dy = maxMove
 		}
 		if dy < -maxMove {
 			dy = -maxMove
-		}
-
-		if !n.isAttracted {
-			if global.Distance(n.hookX, n.hookY, n.x, n.x) < 20 {
-				n.x += dx
-				n.y += dy
-				return
-			}
-			n.isAttracted = true
 		}
 
 		n.x -= dx

@@ -9,10 +9,14 @@ import (
 const (
 	WeaponNone = iota
 	WeaponBoomerang
-	WeaponArrow
+	WeaponCrystal
 	WeaponSword
 	WeaponSpear
 	WeaponShuriken
+	WeaponMagneticGloves
+	WeaponHammer
+	// leave this on bottom
+	WeaponMax // max value for weapon types
 )
 
 var (
@@ -20,96 +24,151 @@ var (
 )
 
 type WeaponData struct {
-	Delay  time.Duration
-	Bullet *bullet.BulletData
-	Icon   *SpriteData
+	name       string
+	Delay      time.Duration
+	MaxBullets int
+	Bullet     *bullet.BulletData
+	Icon       *SpriteData
 }
 
 type SpriteData struct {
-	spriteName string
-	layerName  string
+	SpriteName string
+	LayerName  string
 }
 
 func init() {
 	weaponTypes = make(map[int]*WeaponData)
 	weaponTypes[WeaponBoomerang] = &WeaponData{
-		Delay: 250 * time.Millisecond,
+		name:  "Boomerang",
+		Delay: 2500 * time.Millisecond,
 		Bullet: &bullet.BulletData{
-			BehaviorType: bullet.BehaviorBoomerang,
-			Damage:       1,
-			SpriteName:   "bullet",
-			LayerName:    "default",
-			Distance:     300,
-			MoveSpeed:    4,
+			BehaviorType:     bullet.BehaviorBoomerang,
+			SourceWeaponType: WeaponBoomerang,
+			Damage:           10,
+			SpriteName:       "boomerang",
+			LayerName:        "base",
+			Distance:         150,
+			MoveSpeed:        2,
 		},
 		Icon: &SpriteData{
-			spriteName: "item",
-			layerName:  "boomerang",
+			SpriteName: "icon",
+			LayerName:  "boomerang",
 		},
 	}
 
-	weaponTypes[WeaponArrow] = &WeaponData{
-		Delay: 1500 * time.Millisecond,
+	weaponTypes[WeaponCrystal] = &WeaponData{
+		name:       "Crystal",
+		Delay:      6000 * time.Millisecond,
+		MaxBullets: 1,
 		Bullet: &bullet.BulletData{
-			BehaviorType: bullet.BehaviorCircle,
-			Damage:       10,
-			IsImmortal:   true,
-			SpriteName:   "crystal",
-			LayerName:    "crystal",
-			Distance:     20,
-			MoveSpeed:    4,
+			BehaviorType:     bullet.BehaviorLasso,
+			SourceWeaponType: WeaponCrystal,
+			Damage:           10,
+			IsImmortal:       true,
+			SpriteName:       "crystal",
+			LayerName:        "crystal",
+			Distance:         50,
+			MoveSpeed:        2,
 		},
 		Icon: &SpriteData{
-			spriteName: "crystal",
-			layerName:  "crystal",
+			SpriteName: "icon",
+			LayerName:  "crystal",
+		},
+	}
+
+	weaponTypes[WeaponMagneticGloves] = &WeaponData{
+		name:       "Magnetic Gloves",
+		Delay:      9999 * time.Millisecond,
+		MaxBullets: -1,
+		Bullet: &bullet.BulletData{
+			BehaviorType:     bullet.BehaviorNone,
+			SourceWeaponType: WeaponMagneticGloves,
+			IsImmortal:       true,
+			SpriteName:       "gloves",
+			LayerName:        "gloves",
+			Distance:         50,
+		},
+		Icon: &SpriteData{
+			SpriteName: "icon",
+			LayerName:  "gloves",
+		},
+	}
+	weaponTypes[WeaponHammer] = &WeaponData{
+		name:       "Hammer",
+		Delay:      1000 * time.Millisecond,
+		MaxBullets: 1,
+		Bullet: &bullet.BulletData{
+			BehaviorType:     bullet.BehaviorLinear,
+			SourceWeaponType: WeaponHammer,
+			Damage:           20,
+			IsImmortal:       true,
+			SpriteName:       "hammer",
+			LayerName:        "base",
+			Distance:         1,
+			MoveSpeed:        0,
+			OffsetX:          20,
+		},
+		Icon: &SpriteData{
+			SpriteName: "icon",
+			LayerName:  "hammer",
 		},
 	}
 
 	weaponTypes[WeaponSword] = &WeaponData{
+		name:  "Sword",
 		Delay: 600 * time.Millisecond,
 		Bullet: &bullet.BulletData{
-			BehaviorType: bullet.BehaviorLinear,
-			Damage:       1,
-			SpriteName:   "arrow",
-			LayerName:    "sword",
-			Distance:     300,
-			MoveSpeed:    4,
+			BehaviorType:     bullet.BehaviorLinear,
+			SourceWeaponType: WeaponSword,
+			Damage:           1,
+			SpriteName:       "arrow",
+			LayerName:        "sword",
+			Distance:         300,
+			MoveSpeed:        4,
 		},
 		Icon: &SpriteData{
-			spriteName: "arrow",
-			layerName:  "sword",
+			SpriteName: "arrow",
+			LayerName:  "sword",
 		},
 	}
 
 	weaponTypes[WeaponShuriken] = &WeaponData{
+		name:  "Shuriken",
 		Delay: 900 * time.Millisecond,
 		Bullet: &bullet.BulletData{
-			BehaviorType: bullet.BehaviorLinear,
-			Damage:       1,
-			SpriteName:   "arrow",
-			LayerName:    "shuriken",
-			Distance:     300,
-			MoveSpeed:    4,
+			BehaviorType:     bullet.BehaviorLinear,
+			SourceWeaponType: WeaponShuriken,
+			Damage:           1,
+			SpriteName:       "arrow",
+			LayerName:        "shuriken",
+			Distance:         300,
+			MoveSpeed:        4,
 		},
 		Icon: &SpriteData{
-			spriteName: "arrow",
-			layerName:  "shuriken",
+			SpriteName: "arrow",
+			LayerName:  "shuriken",
 		},
 	}
 
 	weaponTypes[WeaponSpear] = &WeaponData{
+		name:  "Spear",
 		Delay: 1200 * time.Millisecond,
 		Bullet: &bullet.BulletData{
-			BehaviorType: bullet.BehaviorLinear,
-			Damage:       1,
-			SpriteName:   "arrow",
-			LayerName:    "spear",
-			Distance:     300,
-			MoveSpeed:    4,
+			BehaviorType:     bullet.BehaviorLinear,
+			SourceWeaponType: WeaponSpear,
+			Damage:           1,
+			SpriteName:       "arrow",
+			LayerName:        "spear",
+			Distance:         300,
+			MoveSpeed:        4,
 		},
 		Icon: &SpriteData{
-			spriteName: "arrow",
-			layerName:  "spear",
+			SpriteName: "arrow",
+			LayerName:  "spear",
 		},
 	}
+}
+
+func (w *WeaponData) Name() string {
+	return w.name
 }

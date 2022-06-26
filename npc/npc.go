@@ -3,6 +3,7 @@ package npc
 import (
 	"fmt"
 	"image/color"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/xackery/aseprite"
 	"github.com/xackery/magnets/camera"
-	"github.com/xackery/magnets/collision"
 	"github.com/xackery/magnets/entity"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/item"
@@ -82,6 +82,28 @@ func New(npcType int, x float64, y float64, player entity.Entiter) (*Npc, error)
 	return n, nil
 }
 
+func (n *Npc) IsSimpleHit(x, y float64) bool {
+	minX := n.x - float64(n.layer.SpriteWidth/2)
+	maxX := n.x + float64(n.layer.SpriteWidth/2)
+	minY := n.y - float64(n.layer.SpriteHeight/2)
+	maxY := n.y + float64(n.layer.SpriteHeight/2)
+	if x < minX {
+		return false
+	}
+	if x > maxX {
+		return false
+	}
+
+	if y < minY {
+		return false
+	}
+
+	if y > maxY {
+		return false
+	}
+	return true
+}
+
 func (n *Npc) IsHit(x, y float64) bool {
 	if n.IsDead() {
 		return false
@@ -148,14 +170,19 @@ func (n *Npc) Draw(screen *ebiten.Image) error {
 	return nil
 }
 
-func (n *Npc) Update(playerX, playerY float64) {
+func (n *Npc) Update() {
 
 	if !isAIEnabled {
 		return
 	}
 
-	x := playerX - n.x
-	y := playerY - n.y
+	x := global.Player.X() - n.x
+	y := global.Player.Y() - n.y
+
+	/*if global.Distance(global.Player.X(), global.Player.Y(), n.x, n.y) > 5 {
+		x += 1 + rand.Float64()*(30-1)
+		y += 1 + rand.Float64()*(30-1)
+	}*/
 
 	if x > 0 && x > n.moveSpeed {
 		x = n.moveSpeed
@@ -174,11 +201,30 @@ func (n *Npc) Update(playerX, playerY float64) {
 	targetX := n.x + x
 	targetY := n.y + y
 
-	if collision.Image.At(int(targetX), int(targetY)).(color.RGBA).A == 0 {
-		n.x += x
-		n.y += y
-		return
+	deltaX := float64(0)
+	deltaY := float64(0)
+
+	isHit := false
+	for pX := float64(0); pX < 1; pX += 0.1 {
+		deltaX = (targetX - n.x) * pX
+		for pY := float64(0); pY < 1; pY += 0.1 {
+			deltaY = (targetY - n.y) * pY
+			for _, tn := range npcs {
+				if tn.IsSimpleHit(deltaX, deltaY) {
+					isHit = true
+				}
+				if isHit {
+					break
+				}
+			}
+			if isHit {
+				break
+			}
+		}
 	}
+
+	n.x += deltaX
+	n.y += deltaY
 
 }
 
@@ -252,10 +298,14 @@ func (n *Npc) Damage(damage int) bool {
 	n.hp -= damage
 	if n.hp < 1 {
 		n.hp = 0
-		_, err := item.New(item.ItemRupee, n.x, n.y, n.player)
-		if err != nil {
-			log.Debug().Err(err).Msgf("item new rupee")
+
+		if rand.Float64() >= 0.5 {
+			_, err := item.New(item.ItemRupee, n.x, n.y)
+			if err != nil {
+				log.Debug().Err(err).Msgf("item new rupee")
+			}
 		}
+
 		return true
 	}
 
