@@ -14,6 +14,7 @@ func (n *Bullet) bulletMove() {
 	n.bulletBoomerang()
 	n.bulletCircle()
 	n.bulletLasso()
+	n.bulletWave()
 }
 
 func (n *Bullet) bulletLinear() {
@@ -110,4 +111,31 @@ func (n *Bullet) bulletLasso() {
 	n.y = n.spawnY + math.Cos(theta)*n.distance
 
 	n.rotation += n.moveSpeed * 0.01*/
+}
+
+func (n *Bullet) bulletWave() {
+	if n.behaviorType != BehaviorWave {
+		return
+	}
+
+	t := n.rotation
+	factor := 1.0
+	increment := factor / 1.2
+	rang := 30.0
+	amp := 10.0
+	if global.IsDirectionLeft(n.direction) {
+		n.x = n.player.X() - t
+		n.y = n.player.Y() + rang*math.Sin(t/amp)
+	} else if global.IsDirectionRight(n.direction) {
+		n.x = n.player.X() + t
+		n.y = n.player.Y() + rang*math.Sin(t/amp)
+	} else if global.IsDirectionUp(n.direction) {
+		n.x = n.player.X() + rang*math.Sin(t/amp)
+		n.y = n.player.Y() - t
+	} else {
+		n.x = n.player.X() + rang*math.Sin(t/amp)
+		n.y = n.player.Y() + t
+	}
+
+	n.rotation += increment
 }

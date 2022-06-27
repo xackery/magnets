@@ -17,8 +17,27 @@ import (
 	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/score"
 	"github.com/xackery/magnets/ui/bar"
+	"github.com/xackery/magnets/ui/life"
 	"github.com/xackery/magnets/weapon"
 )
+
+var (
+	cheats = []*cheat{
+		{key: ebiten.Key1, weapon: weapon.WeaponCrystal},
+		{key: ebiten.Key2, weapon: weapon.WeaponBoomerang},
+		{key: ebiten.Key3, weapon: weapon.WeaponBoot},
+		{key: ebiten.Key4, weapon: weapon.WeaponShovel},
+		{key: ebiten.Key5, weapon: weapon.WeaponMagneticGloves},
+		{key: ebiten.Key6, weapon: weapon.WeaponHammer},
+		{key: ebiten.Key7, weapon: weapon.WeaponSpear},
+		{key: ebiten.Key8, weapon: weapon.WeaponShuriken},
+	}
+)
+
+type cheat struct {
+	key    ebiten.Key
+	weapon int
+}
 
 type Player struct {
 	hid                   string
@@ -39,6 +58,9 @@ type Player struct {
 	direction             int
 	weapons               map[int]*weapon.Weapon
 	weaponUpgradeCooldown time.Time
+	invulCooldown         time.Time
+	invulBlink            bool
+	invulBlinkCooldown    time.Time
 }
 
 type animation struct {
@@ -61,8 +83,8 @@ func New(spriteName string, layerName string) (*Player, error) {
 	n := &Player{
 		spriteName: spriteName,
 		layerName:  layerName,
-		hp:         1,
-		maxHP:      1,
+		hp:         11,
+		maxHP:      20,
 		level:      1,
 		direction:  global.DirectionRight,
 		layer:      layer,
@@ -72,6 +94,8 @@ func New(spriteName string, layerName string) (*Player, error) {
 	}
 	global.Player = n
 
+	life.SetHP(n.hp)
+	life.SetMaxHP(n.maxHP)
 	tag := "walk"
 	err = n.SetAnimation(tag)
 	if err != nil {
@@ -141,13 +165,13 @@ func (n *Player) Draw(screen *ebiten.Image) error {
 	//op.GeoM.Translate(float64(global.ScreenWidth())/2, float64(global.ScreenHeight())/2)
 	//op.GeoM.Translate(float64(n.x), float64(n.y))
 
-	if n.IsDead() {
+	/*if n.IsDead() {
 		op.ColorM.Scale(1, 1, 1, 0.6)
 	} else if n.hp <= (n.maxHP / 2) {
 		op.ColorM.Scale(1, 0.5, 0.5, 1)
 	} else {
 		op.ColorM.Scale(1, 1, 1, 1)
-	}
+	}*/
 	//duplication spell effect?
 	/*for j := -128; j <= 128; j += 32 {
 		//for i := -1; i <= 1; i++ {
@@ -166,6 +190,16 @@ func (n *Player) Draw(screen *ebiten.Image) error {
 		screen.DrawImage(c.EbitenImage, op)
 		//}
 	}*/
+
+	if time.Now().Before(n.invulCooldown) {
+		if time.Now().After(n.invulBlinkCooldown) {
+			n.invulBlink = !n.invulBlink
+			n.invulBlinkCooldown = time.Now().Add(100 * time.Millisecond)
+		}
+		if n.invulBlink {
+			return nil
+		}
+	}
 
 	screen.DrawImage(c.EbitenImage, op)
 
@@ -237,75 +271,37 @@ func (n *Player) animationStep() {
 
 func (n *Player) Update() {
 
-	if input.IsPressed(ebiten.Key1) && time.Now().After(n.weaponUpgradeCooldown) {
-		n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
-		n.addExp(5)
-		if n.hasWeapon(weapon.WeaponCrystal) {
-			n.weaponUpgrade(weapon.WeaponCrystal)
-		} else {
-			w, err := weapon.New(weapon.WeaponCrystal)
-			if err != nil {
-				fmt.Println("weapon new:", err)
-				os.Exit(1)
-			}
-			err = n.weaponAdd(w)
-			if err != nil {
-				log.Error().Err(err).Msgf("weaponAdd")
-			}
+	for _, cheat := range cheats {
+		if time.Now().Before(n.weaponUpgradeCooldown) {
+			break
 		}
-	}
-	if input.IsPressed(ebiten.Key2) && time.Now().After(n.weaponUpgradeCooldown) {
-		n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
-		if n.hasWeapon(weapon.WeaponBoomerang) {
-			n.weaponUpgrade(weapon.WeaponBoomerang)
-		} else {
-			w, err := weapon.New(weapon.WeaponBoomerang)
-			if err != nil {
-				fmt.Println("weapon new:", err)
-				os.Exit(1)
-			}
-			err = n.weaponAdd(w)
-			if err != nil {
-				log.Error().Err(err).Msgf("weaponAdd")
-			}
-		}
-	}
-	if input.IsPressed(ebiten.Key3) && time.Now().After(n.weaponUpgradeCooldown) {
-		n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
-		if n.hasWeapon(weapon.WeaponMagneticGloves) {
-			n.weaponUpgrade(weapon.WeaponMagneticGloves)
-		} else {
-			w, err := weapon.New(weapon.WeaponMagneticGloves)
-			if err != nil {
-				fmt.Println("weapon new:", err)
-				os.Exit(1)
-			}
-			err = n.weaponAdd(w)
-			if err != nil {
-				log.Error().Err(err).Msgf("weaponAdd")
-			}
-		}
-	}
 
-	if input.IsPressed(ebiten.Key4) && time.Now().After(n.weaponUpgradeCooldown) {
-		n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
-		if n.hasWeapon(weapon.WeaponHammer) {
-			n.weaponUpgrade(weapon.WeaponHammer)
-		} else {
-			w, err := weapon.New(weapon.WeaponHammer)
-			if err != nil {
-				fmt.Println("weapon new:", err)
-				os.Exit(1)
+		if input.IsPressed(cheat.key) {
+			if n.hasWeapon(cheat.weapon) {
+				n.weaponUpgrade(cheat.weapon)
+			} else {
+				w, err := weapon.New(cheat.weapon)
+				if err != nil {
+					fmt.Println("weapon new:", err)
+					os.Exit(1)
+				}
+				err = n.weaponAdd(w)
+				if err != nil {
+					log.Error().Err(err).Msgf("weaponAdd")
+				}
 			}
-			err = n.weaponAdd(w)
-			if err != nil {
-				log.Error().Err(err).Msgf("weaponAdd")
-			}
+			n.weaponUpgradeCooldown = time.Now().Add(1 * time.Second)
+			break
 		}
+
 	}
 
 	isMoving := input.IsPlayerMoving()
 	moveSpeed := float64(0.5)
+	bootLvl := n.weaponLevel(weapon.WeaponBoot)
+	if bootLvl > 0 {
+		moveSpeed += float64(bootLvl) * 0.2
+	}
 	if isMoving {
 		n.direction = input.PlayerDirection
 		n.animationStep()
@@ -379,11 +375,18 @@ func (n *Player) HID() string {
 }
 
 func (n *Player) Damage(damage int) bool {
+	if time.Now().Before(n.invulCooldown) {
+		return false
+	}
 	if n.hp < 1 {
 		return false
 	}
 	n.hp -= damage
-	if n.hp < 1 {
+	err := library.AudioPlay("player-hurt")
+	if err != nil {
+		log.Error().Err(err).Msgf("audioplay playerHurt")
+	}
+	if n.hp <= 0 {
 		log.Debug().Msgf("player got killed")
 		for i := 0; i < weapon.WeaponMax; i++ {
 			dmg := score.Damage(i)
@@ -394,8 +397,11 @@ func (n *Player) Damage(damage int) bool {
 		}
 
 		n.hp = 0
+		life.SetHP(0)
 		return true
 	}
+	n.invulCooldown = time.Now().Add(1 * time.Second)
+	life.SetHP(n.hp)
 	return false
 }
 

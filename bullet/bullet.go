@@ -73,6 +73,7 @@ func New(b *BulletData, player entity.Entiter, direction int, lifespan time.Time
 		isImmortal:   b.IsImmortal,
 		spawnCount:   spawnCount,
 	}
+	library.AudioPlay(b.SpriteName)
 	n.x = player.X() + b.OffsetX // + float64(player.SWidth()/4)
 	n.y = player.Y() + b.OffsetY // + float64(player.SHeight()/4)
 

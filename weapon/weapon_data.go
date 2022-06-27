@@ -10,11 +10,12 @@ const (
 	WeaponNone = iota
 	WeaponBoomerang
 	WeaponCrystal
-	WeaponSword
+	WeaponBoot
+	WeaponShovel
+	WeaponHammer
+	WeaponMagneticGloves
 	WeaponSpear
 	WeaponShuriken
-	WeaponMagneticGloves
-	WeaponHammer
 	// leave this on bottom
 	WeaponMax // max value for weapon types
 )
@@ -93,6 +94,7 @@ func init() {
 			LayerName:  "gloves",
 		},
 	}
+
 	weaponTypes[WeaponHammer] = &WeaponData{
 		name:       "Hammer",
 		Delay:      1000 * time.Millisecond,
@@ -114,21 +116,23 @@ func init() {
 		},
 	}
 
-	weaponTypes[WeaponSword] = &WeaponData{
-		name:  "Sword",
-		Delay: 600 * time.Millisecond,
+	weaponTypes[WeaponShovel] = &WeaponData{
+		name:       "Shovel",
+		Delay:      6000 * time.Millisecond,
+		MaxBullets: 1,
 		Bullet: &bullet.BulletData{
-			BehaviorType:     bullet.BehaviorLinear,
-			SourceWeaponType: WeaponSword,
-			Damage:           1,
-			SpriteName:       "arrow",
-			LayerName:        "sword",
-			Distance:         300,
-			MoveSpeed:        4,
+			BehaviorType:     bullet.BehaviorLasso,
+			SourceWeaponType: WeaponShovel,
+			Damage:           10,
+			IsImmortal:       true,
+			SpriteName:       "shovel",
+			LayerName:        "base",
+			Distance:         50,
+			MoveSpeed:        2,
 		},
 		Icon: &SpriteData{
-			SpriteName: "arrow",
-			LayerName:  "sword",
+			SpriteName: "icon",
+			LayerName:  "shovel",
 		},
 	}
 
@@ -154,7 +158,7 @@ func init() {
 		name:  "Spear",
 		Delay: 1200 * time.Millisecond,
 		Bullet: &bullet.BulletData{
-			BehaviorType:     bullet.BehaviorLinear,
+			BehaviorType:     bullet.BehaviorWave,
 			SourceWeaponType: WeaponSpear,
 			Damage:           1,
 			SpriteName:       "arrow",
@@ -165,6 +169,24 @@ func init() {
 		Icon: &SpriteData{
 			SpriteName: "arrow",
 			LayerName:  "spear",
+		},
+	}
+
+	weaponTypes[WeaponBoot] = &WeaponData{
+		name:       "Boot",
+		Delay:      9999 * time.Millisecond,
+		MaxBullets: -1,
+		Bullet: &bullet.BulletData{
+			BehaviorType:     bullet.BehaviorNone,
+			SourceWeaponType: WeaponBoot,
+			IsImmortal:       true,
+			SpriteName:       "boot",
+			LayerName:        "base",
+			Distance:         50,
+		},
+		Icon: &SpriteData{
+			SpriteName: "icon",
+			LayerName:  "boot",
 		},
 	}
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/xackery/magnets/player"
 	"github.com/xackery/magnets/ui/bar"
 	"github.com/xackery/magnets/ui/equipment"
+	"github.com/xackery/magnets/ui/life"
 	"github.com/xackery/magnets/world"
 	"golang.org/x/image/font/gofont/goregular"
 )
@@ -146,6 +147,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(collision.Image, nil)
 	bar.Draw(screen)
 	equipment.Draw(screen)
+	life.Draw(screen)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f, Position: %0.2f, %0.2f, Camera: %0.2f, %0.2f", ebiten.CurrentTPS(), player.X(), player.Y(), camera.X, camera.Y), 0, global.ScreenHeight()-14)
 }
 

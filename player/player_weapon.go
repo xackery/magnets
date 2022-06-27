@@ -31,6 +31,9 @@ func (n *Player) weaponUpdate() {
 		}
 		i := 0
 		for _, b := range w.Bullets {
+			if b == nil {
+				continue
+			}
 			if b.IsDead() {
 				continue
 			}
@@ -66,7 +69,7 @@ func (n *Player) weaponUpgrade(weaponType int) {
 	if n.weapons[weaponType].Level > 9 {
 		n.weapons[weaponType].Level = 9
 	}
-	log.Debug().Msgf("weapon %d is now level %d", weaponType, n.weapons[weaponType].Level)
+	log.Debug().Msgf("weapon %s (%d) is now level %d", weapon.Name(weaponType), weaponType, n.weapons[weaponType].Level)
 }
 
 func (n *Player) weaponDelay(weaponType int) time.Duration {
@@ -132,4 +135,12 @@ func (n *Player) weaponBulletSpawn(w *weapon.Weapon) {
 		}
 		w.Bullets = append(w.Bullets, b)
 	}
+}
+
+func (n *Player) weaponLevel(weaponType int) int {
+	w, ok := n.weapons[weaponType]
+	if !ok {
+		return 0
+	}
+	return w.Level
 }

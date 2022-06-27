@@ -35,6 +35,11 @@ func init() {
 	keys[ebiten.Key2] = &keyEntry{key: ebiten.Key2}
 	keys[ebiten.Key3] = &keyEntry{key: ebiten.Key3}
 	keys[ebiten.Key4] = &keyEntry{key: ebiten.Key4}
+	keys[ebiten.Key5] = &keyEntry{key: ebiten.Key5}
+	keys[ebiten.Key6] = &keyEntry{key: ebiten.Key6}
+	keys[ebiten.Key7] = &keyEntry{key: ebiten.Key7}
+	keys[ebiten.Key8] = &keyEntry{key: ebiten.Key8}
+	keys[ebiten.Key9] = &keyEntry{key: ebiten.Key9}
 	keys[ebiten.KeyGraveAccent] = &keyEntry{key: ebiten.KeyGraveAccent}
 }
 

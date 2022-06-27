@@ -13,6 +13,7 @@ const (
 	BehaviorBoomerang
 	BehaviorCircle
 	BehaviorLasso
+	BehaviorWave
 )
 
 type BulletData struct {
