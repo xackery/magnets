@@ -62,7 +62,7 @@ func init() {
 		Delay:      6000 * time.Millisecond,
 		MaxBullets: 1,
 		Bullet: &bullet.BulletData{
-			BehaviorType:     bullet.BehaviorLasso,
+			BehaviorType:     bullet.BehaviorCircle,
 			SourceWeaponType: WeaponCrystal,
 			Damage:           10,
 			IsImmortal:       true,

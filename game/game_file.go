@@ -13,6 +13,7 @@ var (
 		"frame.aseprite",
 		"frame.aseprite",
 		"gloves.aseprite",
+		"crystal.wav",
 		"hammer.aseprite",
 		"hammer.wav",
 		"heart.aseprite",
