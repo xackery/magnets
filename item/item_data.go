@@ -3,6 +3,9 @@ package item
 const (
 	ItemNone = iota
 	ItemRupee
+	ItemGreenRupee
+	ItemRedRupee
+	ItemHeart
 )
 
 var (
@@ -19,6 +22,24 @@ func init() {
 	itemTypes[ItemRupee] = &ItemData{
 		SpriteName: "rupee",
 		LayerName:  "base",
+		Value:      1,
+	}
+
+	itemTypes[ItemGreenRupee] = &ItemData{
+		SpriteName: "rupee",
+		LayerName:  "green",
+		Value:      5,
+	}
+
+	itemTypes[ItemRedRupee] = &ItemData{
+		SpriteName: "rupee",
+		LayerName:  "red",
+		Value:      20,
+	}
+
+	itemTypes[ItemHeart] = &ItemData{
+		SpriteName: "heart",
+		LayerName:  "full",
 		Value:      1,
 	}
 }

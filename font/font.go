@@ -44,22 +44,22 @@ func Load() error {
 	}
 
 	mplusTinyFont = truetype.NewFace(tt, &truetype.Options{
-		Size:    16,
+		Size:    8,
 		DPI:     dpi,
 		Hinting: font.HintingFull,
 	})
 	mplusSmallFont = truetype.NewFace(tt, &truetype.Options{
-		Size:    20,
+		Size:    10,
 		DPI:     dpi,
 		Hinting: font.HintingFull,
 	})
 	mplusNormalFont = truetype.NewFace(tt, &truetype.Options{
-		Size:    32,
+		Size:    16,
 		DPI:     dpi,
 		Hinting: font.HintingFull,
 	})
 	mplusBigFont = truetype.NewFace(tt, &truetype.Options{
-		Size:    48,
+		Size:    32,
 		DPI:     dpi,
 		Hinting: font.HintingFull,
 	})

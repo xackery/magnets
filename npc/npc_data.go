@@ -8,6 +8,7 @@ const (
 	NpcAseprite
 	NpcPot
 	NpcKnight
+	NpcStump
 )
 
 var (
@@ -68,11 +69,19 @@ func init() {
 		},
 	}
 	npcTypes[NpcKnight] = &NpcData{
-		MaxHP:     30,
+		MaxHP:     40,
 		MoveSpeed: 0.2,
 		Sprite: &SpriteData{
 			spriteName: "land",
 			layerName:  "knight",
+		},
+	}
+	npcTypes[NpcStump] = &NpcData{
+		MaxHP:     30,
+		MoveSpeed: 0.2,
+		Sprite: &SpriteData{
+			spriteName: "land",
+			layerName:  "stump",
 		},
 	}
 }

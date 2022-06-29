@@ -142,11 +142,11 @@ func (g *Game) start() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	collision.Image = ebiten.NewImage(screen.Bounds().Dx(), screen.Bounds().Dy())
 
-	screen.Fill(color.RGBA64{R: 0x5050, G: 0x5050, B: 0xcfcf, A: 0xFFFF})
+	screen.Fill(color.RGBA64{R: 6565, G: 0x9090, B: 0x3d3d, A: 0xFFFF})
 	//update game
 	//x, y := ebiten.CursorPosition()
 
-	world.Draw(screen)
+	//world.Draw(screen)
 	npc.Draw(collision.Image)
 	item.Draw(screen)
 	bullet.Draw(screen)
@@ -226,11 +226,18 @@ func (g *Game) Update() error {
 func (g *Game) countdownDraw(screen *ebiten.Image) {
 	width := global.ScreenWidth()
 	height := 64
-	msg := fmt.Sprintf("%d", global.Countdown)
+	msg := fmt.Sprintf("Survive for %d seconds!", global.Countdown)
 
-	bounds := text.BoundString(font.TinyFont(), msg)
+	bounds := text.BoundString(font.NormalFont(), msg)
 	x, y := int(width/2)-bounds.Min.X-bounds.Dx()/2, int(height/2)-bounds.Min.Y-bounds.Dy()/2
 
-	text.Draw(screen, msg, font.TinyFont(), x-1, y-1, color.Black)
-	text.Draw(screen, msg, font.TinyFont(), x, y, color.White)
+	text.Draw(screen, msg, font.NormalFont(), x-1, y-1, color.Black)
+	text.Draw(screen, msg, font.NormalFont(), x, y, color.White)
+
+	x += 350
+	y += 50
+
+	text.Draw(screen, fmt.Sprintf("%d kills", global.Kill), font.NormalFont(), x-1, y-1, color.Black)
+	text.Draw(screen, fmt.Sprintf("%d kills", global.Kill), font.NormalFont(), x, y, color.White)
+
 }

@@ -160,8 +160,8 @@ func (n *Npc) Draw(screen *ebiten.Image) error {
 	if n.IsDead() {
 		return nil
 	}
-	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
-	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
+	//text.Draw(screen, n.nameTag, font.NormalFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
+	//text.Draw(screen, n.nameTag, font.NormalFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
 	/*x := n.x
 	y := n.y + 30
 	x -= float64(n.SWidth() / 2)
@@ -302,11 +302,34 @@ func (n *Npc) Damage(damage int) bool {
 	if n.hp < 1 {
 		n.hp = 0
 		global.Kill++
-		if rand.Float64() >= 0.5 {
+
+		if rand.Float64() <= 0.1 {
+			_, err := item.New(item.ItemHeart, n.x, n.y)
+			if err != nil {
+				log.Debug().Err(err).Msgf("item new heart")
+			}
+			return true
+		}
+		if n.maxHP > 20 && rand.Float64() <= 0.05 {
+			_, err := item.New(item.ItemRedRupee, n.x, n.y)
+			if err != nil {
+				log.Debug().Err(err).Msgf("item new red rupee")
+			}
+			return true
+		}
+		if n.maxHP > 20 && rand.Float64() <= 0.2 {
+			_, err := item.New(item.ItemGreenRupee, n.x, n.y)
+			if err != nil {
+				log.Debug().Err(err).Msgf("item new green rupee")
+			}
+			return true
+		}
+		if rand.Float64() <= 0.5 {
 			_, err := item.New(item.ItemRupee, n.x, n.y)
 			if err != nil {
 				log.Debug().Err(err).Msgf("item new rupee")
 			}
+			return true
 		}
 
 		return true

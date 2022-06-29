@@ -8,7 +8,9 @@ import (
 	"github.com/xackery/magnets/camera"
 	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/item"
+	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/npc"
+	"github.com/xackery/magnets/ui/life"
 	"github.com/xackery/magnets/weapon"
 )
 
@@ -93,7 +95,15 @@ func HitUpdate() {
 				i := item.Pickup(p.x+float64(x), p.y+float64(y))
 				if i != nil {
 					if i.Data.SpriteName == "rupee" {
-						p.addExp(1)
+						p.addExp(i.Data.Value)
+					}
+					if i.Data.SpriteName == "heart" {
+
+						if p.hp < p.maxHP {
+							library.AudioPlay("heal")
+							p.hp++
+							life.SetHP(p.hp)
+						}
 					}
 				}
 			}

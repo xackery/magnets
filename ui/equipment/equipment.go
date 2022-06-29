@@ -59,11 +59,11 @@ func (n *Equipment) Draw(xOffset float64, yOffset float64, screen *ebiten.Image)
 	//op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
 	screen.DrawImage(n.cell.EbitenImage, op)
 
-	//bounds := text.BoundString(font.TinyFont(), n.text)
+	//bounds := text.BoundString(font.NormalFont(), n.text)
 	//x, y := int(n.width/2)-bounds.Min.X-bounds.Dx()/2, int(n.height/2)-bounds.Min.Y-bounds.Dy()/2
 
-	//text.Draw(screen, n.text, font.TinyFont(), x-1, y-1, color.Black)
-	//text.Draw(screen, n.text, font.TinyFont(), x, y, color.White)
+	//text.Draw(screen, n.text, font.NormalFont(), x-1, y-1, color.Black)
+	//text.Draw(screen, n.text, font.NormalFont(), x, y, color.White)
 	return nil
 }
 

@@ -13,3 +13,4 @@ https://sfxr.me/
 - [shovel.wav](https://sfxr.me/#7hifvHJwQbeb3whBqkMmAqags2dYaWeNWXXy1NBKVZTJspF3BccgCtxVo2G71TWdtjZDcHxx36W3BWW2mCnPTyJHBR1BaKRY3DT6bDCeVHSHZ6wb9LEhQ6pvh)
 - [hammer.wav](https://sfxr.me/#7BMHBGLDqGGAz3KzUKewiK8zeBVguXU6VHK4cPeRCqs4MqqD25BFjyZ42nFUa2CzhTSA4uEc6Yx1cVz4dsLEnDiDYJS233cHoXdASzsE14CaagrzJr4vzbGCf)
 - [crystal.wav](https://sfxr.me/#34T6PkwmyaaDTxqaEyzAZkuUiMzbHBoXcnUdqEBjHMGZ3rEeuaiE5wDfvv9GhjsZRaVFAAxyLvzvoTfX2ZkmPReES2VCmsTYHGQRma3u1L2XQZN7TKQpamH43)
+- [heal.wav](https://sfxr.me/#7Ti8AiDBCuotQbJSG2r7EJLhzF9Cf3emjB7wGjj8LAbeqByKyG7L2irmhyc6ZUJYkL4aRbbAgdhj4ScbaxrAsNQvAvgC7JAQdNVcgoL9WPF9uzLJVRwTqwMnB)

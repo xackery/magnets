@@ -83,13 +83,17 @@ func (n *Level) Draw(screen *ebiten.Image, yOffset float64) error {
 	//op.GeoM.Translate(float64(n.cell.PositionX), float64(n.cell.PositionY))
 	//	screen.DrawImage(n.cell.EbitenImage, op)
 
-	//bounds := text.BoundString(font.TinyFont(), n.data.Name())
+	//bounds := text.BoundString(font.NormalFont(), n.data.Name())
 	//x, y := int(n.width/2)-bounds.Min.X-bounds.Dx()/2, int(n.height/2)-bounds.Min.Y-bounds.Dy()/2
 
 	x := n.x + 50
 	y := n.y + 10
-	text.Draw(screen, n.Data.Name(), font.TinyFont(), int(x-1), int(y-1), color.Black)
-	text.Draw(screen, n.Data.Name(), font.TinyFont(), int(x), int(y), color.White)
+	text.Draw(screen, n.Data.Name(), font.NormalFont(), int(x-1), int(y-1), color.Black)
+	text.Draw(screen, n.Data.Name(), font.NormalFont(), int(x), int(y), color.White)
+
+	y += 20
+	text.Draw(screen, n.Data.Description, font.SmallFont(), int(x-1), int(y-1), color.Black)
+	text.Draw(screen, n.Data.Description, font.SmallFont(), int(x), int(y), color.White)
 	return nil
 }
 
@@ -146,7 +150,7 @@ func (n *Level) IsHit(x, y float64) bool {
 	if n.y > y {
 		return false
 	}
-	if n.y+float64(n.layer.SpriteHeight) < y {
+	if n.y+(float64(n.layer.SpriteHeight)*2) < y {
 		return false
 	}
 	return true

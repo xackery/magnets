@@ -33,8 +33,7 @@ var (
 		{key: ebiten.Key4, weapon: weapon.WeaponShovel},
 		{key: ebiten.Key5, weapon: weapon.WeaponMagneticGloves},
 		{key: ebiten.Key6, weapon: weapon.WeaponHammer},
-		{key: ebiten.Key7, weapon: weapon.WeaponSpear},
-		{key: ebiten.Key8, weapon: weapon.WeaponShuriken},
+		{key: ebiten.Key7, weapon: weapon.WeaponShuriken},
 	}
 )
 
@@ -97,6 +96,17 @@ func New(spriteName string, layerName string) (*Player, error) {
 		weapons:    make(map[int]*weapon.Weapon),
 	}
 	global.Player = n
+
+	newPick := n.randomWeaponUpgrade([]int{weapon.WeaponBoot, weapon.WeaponMagneticGloves, weapon.WeaponHeart, weapon.WeaponMagnet})
+	w, err := weapon.New(newPick.Bullet.SourceWeaponType)
+	if err != nil {
+		fmt.Println("weapon new:", err)
+		os.Exit(1)
+	}
+	err = n.weaponAdd(w)
+	if err != nil {
+		log.Error().Err(err).Msgf("weaponAdd")
+	}
 
 	life.SetHP(n.hp)
 	life.SetMaxHP(n.maxHP)
@@ -210,8 +220,8 @@ func (n *Player) Draw(screen *ebiten.Image) error {
 	if n.IsDead() {
 		return nil
 	}
-	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
-	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
+	//text.Draw(screen, n.nameTag, font.NormalFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
+	//text.Draw(screen, n.nameTag, font.NormalFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
 	//x := n.x
 	//y := n.y + 30
 	//x -= float64(n.SWidth() / 2)
@@ -521,7 +531,7 @@ func (n *Player) Y() float64 {
 }
 
 func (n *Player) maxExp() int {
-	return n.level * 10
+	return n.level * 5
 }
 
 func (n *Player) addExp(value int) {
@@ -537,7 +547,7 @@ func (n *Player) addExp(value int) {
 
 func (n *Player) AttractionRange() float64 {
 	dist := float64(20)
-	w, ok := n.weapons[weapon.WeaponMagneticGloves]
+	w, ok := n.weapons[weapon.WeaponMagnet]
 	if !ok {
 		return dist
 	}
@@ -548,6 +558,7 @@ func (n *Player) levelup() {
 	var err error
 	level.Clear()
 	lastPicks := []int{}
+
 	for i := 0; i < 3; i++ {
 		newPick := n.randomWeaponUpgrade(lastPicks)
 		_, err = level.New(newPick)
@@ -568,7 +579,7 @@ func (n *Player) levelup() {
 
 func (n *Player) randomWeaponUpgrade(lastPicks []int) *weapon.WeaponData {
 	for i := 0; i < 30; i++ {
-		weaponType := rand.Intn(weapon.WeaponMax-1-1) + 1
+		weaponType := rand.Intn(weapon.WeaponMax-1) + 1
 		isNew := true
 		for _, last := range lastPicks {
 			if weaponType != last {

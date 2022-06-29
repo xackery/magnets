@@ -12,12 +12,17 @@ import (
 	"github.com/xackery/magnets/input"
 )
 
+const (
+	maxDistance = float64(600)
+	minDistance = float64(200)
+)
+
 var (
 	npcs                []*Npc
-	isAIEnabled         bool
+	isAIEnabled         bool = true
 	isAIEnabledCooldown time.Time
 	spawnerCooldown     time.Time
-	spawnMax            int = 50
+	step                int
 )
 
 func init() {
@@ -75,31 +80,7 @@ func Update() {
 	for _, p := range npcs {
 		p.Update()
 	}
-	if isAIEnabled {
-		if time.Now().After(spawnerCooldown) {
-			spawnerCooldown = time.Now().Add(3 * time.Second)
-			if len(npcs) > spawnMax {
-				return
-			}
-			spawnCount := spawnMax + 1 - len(npcs)
-			if spawnCount > 3 {
-				spawnerCooldown = time.Now().Add(500 * time.Millisecond)
-				spawnCount = 3
-			}
-			maxDistance := float64(300)
-			minDistance := float64(200)
-
-			for i := 0; i < spawnCount; i++ {
-
-				theta := rand.Float64() * 6
-
-				distance := minDistance + (rand.Float64() * (maxDistance - minDistance))
-
-				New(rand.Intn(6-1)+1, global.Player.X()+math.Sin(theta)*distance, global.Player.Y()+math.Cos(theta)*distance, global.Player)
-			}
-			log.Debug().Msgf("spawned %d", spawnCount)
-		}
-	}
+	spawner()
 }
 
 func HitUpdate() {
@@ -159,4 +140,72 @@ func cleanupDead() {
 		newNpcs = append(newNpcs, p)
 	}
 	npcs = newNpcs
+}
+
+func spawner() {
+	if !isAIEnabled {
+		return
+	}
+
+	if global.Countdown < 600 && step == 0 {
+		spawn(NpcBat, 30)
+		step = 1
+	}
+
+	if global.Countdown < 550 && step == 1 {
+		spawn(NpcBat, 20)
+		spawn(NpcCloud, 20)
+		step = 2
+	}
+
+	if global.Countdown < 500 && step == 2 {
+		spawn(NpcBat, 20)
+		spawn(NpcCloud, 20)
+		spawn(NpcFlower, 20)
+		step = 3
+	}
+
+	if global.Countdown < 450 && step == 3 {
+		spawn(NpcKnight, 20)
+		spawn(NpcCloud, 20)
+		spawn(NpcFlower, 20)
+		step = 4
+	}
+
+	if global.Countdown < 400 && step == 4 {
+		spawn(NpcKnight, 20)
+		spawn(NpcCloud, 20)
+		spawn(Npc, 20)
+		step = 5
+	}
+
+	/*
+		spawnerCooldown = time.Now().Add(3 * time.Second)
+		if len(npcs) > spawnMax {
+			return
+		}
+		spawnCount := spawnMax + 1 - len(npcs)
+		if spawnCount > 3 {
+			spawnerCooldown = time.Now().Add(500 * time.Millisecond)
+			spawnCount = 3
+		}
+
+		for i := 0; i < spawnCount; i++ {
+
+			theta := rand.Float64() * 6
+
+			distance := minDistance + (rand.Float64() * (maxDistance - minDistance))
+
+			New(rand.Intn(6-1)+1, global.Player.X()+math.Sin(theta)*distance, global.Player.Y()+math.Cos(theta)*distance, global.Player)
+		}
+		log.Debug().Msgf("spawned %d", spawnCount)
+	*/
+}
+
+func spawn(npcType int, count int) {
+	for i := 0; i < count; i++ {
+		theta := rand.Float64() * 6
+		distance := minDistance + (rand.Float64() * (maxDistance - minDistance))
+		New(npcType, global.Player.X()+math.Sin(theta)*distance, global.Player.Y()+math.Cos(theta)*distance, global.Player)
+	}
 }

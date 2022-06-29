@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/xackery/magnets/bullet"
 	"github.com/xackery/magnets/ui/equipment"
+	"github.com/xackery/magnets/ui/life"
 	"github.com/xackery/magnets/weapon"
 )
 
@@ -20,6 +21,12 @@ func (n *Player) weaponAdd(w *weapon.Weapon) error {
 	if err != nil {
 		return fmt.Errorf("equipment.New %s: %w", weapon.Name(w.WeaponType), err)
 	}
+
+	if w.WeaponType == weapon.WeaponHeart {
+		n.maxHP++
+	}
+	life.SetMaxHP(n.maxHP)
+
 	log.Debug().Msgf("player equipped %s (%d)", weapon.Name(w.WeaponType), w.WeaponType)
 	return nil
 }
@@ -69,6 +76,10 @@ func (n *Player) weaponUpgrade(weaponType int) {
 	if n.weapons[weaponType].Level > 9 {
 		n.weapons[weaponType].Level = 9
 	}
+	if weaponType == weapon.WeaponHeart {
+		n.maxHP++
+	}
+	life.SetMaxHP(n.maxHP)
 	log.Debug().Msgf("weapon %s (%d) is now level %d", weapon.Name(weaponType), weaponType, n.weapons[weaponType].Level)
 }
 

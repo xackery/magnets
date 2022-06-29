@@ -114,8 +114,8 @@ func (n *World) Draw(screen *ebiten.Image) error {
 	}*/
 
 	screen.DrawImage(c.EbitenImage, op)
-	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
-	//text.Draw(screen, n.nameTag, font.TinyFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
+	//text.Draw(screen, n.nameTag, font.NormalFont(), n.x-(len(n.nameTag)*2)+1, n.y+int(n.layer.SpriteHeight)+40+1, color.Black)
+	//text.Draw(screen, n.nameTag, font.NormalFont(), n.x-(len(n.nameTag)*2), n.y+int(n.layer.SpriteHeight)+40, color.White)
 	//x := n.x
 	//y := n.y + 30
 	//x -= float64(n.SWidth() / 2)

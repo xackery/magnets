@@ -46,12 +46,13 @@ func Draw(screen *ebiten.Image) error {
 	}
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(background.PositionX), float64(background.PositionY))
+	op.ColorM.Scale(1, 1, 1, 0.7)
 	op.GeoM.Translate(float64(global.ScreenWidth())/2-float64(background.EbitenImage.Bounds().Dx()/2), 50)
 	//op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
 	screen.DrawImage(background.EbitenImage, op)
 
-	text.Draw(screen, title, font.TinyFont(), global.ScreenWidth()/2-1-60, 70-1, color.Black)
-	text.Draw(screen, title, font.TinyFont(), global.ScreenWidth()/2-60, 70, color.White)
+	text.Draw(screen, title, font.NormalFont(), global.ScreenWidth()/2-1-60, 70-1, color.Black)
+	text.Draw(screen, title, font.NormalFont(), global.ScreenWidth()/2-60, 70, color.White)
 
 	for i, b := range levels {
 		err = b.Draw(screen, float64(i)*64)
@@ -74,6 +75,7 @@ func IsHit(x, y float64) *Level {
 	}
 	return nil
 }
+
 func ByIndex(index int) *Level {
 	if len(levels) <= index {
 		return nil

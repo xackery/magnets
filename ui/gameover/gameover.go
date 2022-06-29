@@ -2,6 +2,7 @@ package gameover
 
 import (
 	"image/color"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -44,19 +45,22 @@ func Draw(screen *ebiten.Image) error {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(background.PositionX), float64(background.PositionY))
 	op.GeoM.Translate(float64(global.ScreenWidth())/2-float64(background.EbitenImage.Bounds().Dx()/2), 50)
+	if strings.Contains(title, "Game") {
+		op.ColorM.Scale(1, 0, 0, 0.7)
+	}
 	//op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
 	screen.DrawImage(background.EbitenImage, op)
 
 	x := global.ScreenWidth()/2 - 60
 	y := 70
-	text.Draw(screen, title, font.TinyFont(), x-1, y-1, color.Black)
-	text.Draw(screen, title, font.TinyFont(), x, y, color.White)
+	text.Draw(screen, title, font.NormalFont(), x-1, y-1, color.Black)
+	text.Draw(screen, title, font.NormalFont(), x, y, color.White)
 
 	y += 32
 	for _, t := range texts {
 		y += 32
-		text.Draw(screen, t, font.TinyFont(), x-1, y-1, color.Black)
-		text.Draw(screen, t, font.TinyFont(), x, y, color.White)
+		text.Draw(screen, t, font.NormalFont(), x-1, y-1, color.Black)
+		text.Draw(screen, t, font.NormalFont(), x, y, color.White)
 	}
 
 	return nil

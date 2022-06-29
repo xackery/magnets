@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	cellSize float64 = 8
+	cellSize float64 = 16
 	countRow float64 = 10
 )
 
@@ -65,6 +65,7 @@ func Draw(screen *ebiten.Image) error {
 		}
 
 		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(2, 2)
 		op.GeoM.Translate(float64(base.PositionX), float64(base.PositionY))
 		op.GeoM.Translate((float64(global.ScreenWidth())-cellSize*countRow)+xOffset, yOffset+16)
 		screen.DrawImage(base.EbitenImage, op)
@@ -76,6 +77,7 @@ func Draw(screen *ebiten.Image) error {
 			continue
 		}
 		op.GeoM.Reset()
+		op.GeoM.Scale(2, 2)
 		op.GeoM.Translate(float64(heart.PositionX), float64(heart.PositionY))
 		op.GeoM.Translate((float64(global.ScreenWidth())-cellSize*countRow)+xOffset, yOffset+16)
 		screen.DrawImage(heart.EbitenImage, op)

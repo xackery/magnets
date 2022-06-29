@@ -8,7 +8,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/xackery/aseprite"
 	"github.com/xackery/magnets/font"
-	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/library"
 )
 
@@ -69,14 +68,12 @@ func (n *Bar) Draw(screen *ebiten.Image) error {
 	//op.GeoM.Translate(float64(n.cell.PositionX), float64(n.cell.PositionY))
 	screen.DrawImage(n.cell.EbitenImage, op)
 
-	bounds := text.BoundString(font.TinyFont(), n.text)
+	bounds := text.BoundString(font.NormalFont(), n.text)
 	x, y := int(n.width/2)-bounds.Min.X-bounds.Dx()/2, int(n.height/2)-bounds.Min.Y-bounds.Dy()/2
 
-	text.Draw(screen, n.text, font.TinyFont(), x-1, y-1, color.Black)
-	text.Draw(screen, n.text, font.TinyFont(), x, y, color.White)
+	text.Draw(screen, n.text, font.NormalFont(), x-1, y-1, color.Black)
+	text.Draw(screen, n.text, font.NormalFont(), x, y, color.White)
 
-	text.Draw(screen, fmt.Sprintf("%d kills", global.Kill), font.TinyFont(), 50+x-1, y+22-1, color.Black)
-	text.Draw(screen, fmt.Sprintf("%d kills", global.Kill), font.TinyFont(), 50+x, y+22, color.White)
 	return nil
 }
 

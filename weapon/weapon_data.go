@@ -14,8 +14,9 @@ const (
 	WeaponShovel
 	WeaponHammer
 	WeaponMagneticGloves
-	WeaponSpear
+	WeaponMagnet
 	WeaponShuriken
+	WeaponHeart
 	// leave this on bottom
 	WeaponMax // max value for weapon types
 )
@@ -25,11 +26,12 @@ var (
 )
 
 type WeaponData struct {
-	name       string
-	Delay      time.Duration
-	MaxBullets int
-	Bullet     *bullet.BulletData
-	Icon       *SpriteData
+	name        string
+	Delay       time.Duration
+	MaxBullets  int
+	Bullet      *bullet.BulletData
+	Description string
+	Icon        *SpriteData
 }
 
 type SpriteData struct {
@@ -40,8 +42,9 @@ type SpriteData struct {
 func init() {
 	weaponTypes = make(map[int]*WeaponData)
 	weaponTypes[WeaponBoomerang] = &WeaponData{
-		name:  "Boomerang",
-		Delay: 2500 * time.Millisecond,
+		name:        "Boomerang",
+		Description: "Fires at an enemy and returns back",
+		Delay:       2500 * time.Millisecond,
 		Bullet: &bullet.BulletData{
 			BehaviorType:     bullet.BehaviorBoomerang,
 			SourceWeaponType: WeaponBoomerang,
@@ -58,9 +61,10 @@ func init() {
 	}
 
 	weaponTypes[WeaponCrystal] = &WeaponData{
-		name:       "Crystal",
-		Delay:      6000 * time.Millisecond,
-		MaxBullets: 1,
+		name:        "Crystal",
+		Delay:       6000 * time.Millisecond,
+		Description: "Circles around the caster",
+		MaxBullets:  1,
 		Bullet: &bullet.BulletData{
 			BehaviorType:     bullet.BehaviorCircle,
 			SourceWeaponType: WeaponCrystal,
@@ -78,11 +82,12 @@ func init() {
 	}
 
 	weaponTypes[WeaponMagneticGloves] = &WeaponData{
-		name:       "Magnetic Gloves",
-		Delay:      9999 * time.Millisecond,
-		MaxBullets: -1,
+		name:        "Magnetic Gloves",
+		Description: "Knocks nearby enemies back",
+		Delay:       10000 * time.Millisecond,
+		MaxBullets:  1,
 		Bullet: &bullet.BulletData{
-			BehaviorType:     bullet.BehaviorNone,
+			BehaviorType:     bullet.BehaviorKnockback,
 			SourceWeaponType: WeaponMagneticGloves,
 			IsImmortal:       true,
 			SpriteName:       "gloves",
@@ -95,10 +100,30 @@ func init() {
 		},
 	}
 
+	weaponTypes[WeaponMagnet] = &WeaponData{
+		name:        "Magnet",
+		Description: "Attracts coins to player",
+		Delay:       9999 * time.Millisecond,
+		MaxBullets:  -1,
+		Bullet: &bullet.BulletData{
+			BehaviorType:     bullet.BehaviorNone,
+			SourceWeaponType: WeaponMagnet,
+			IsImmortal:       true,
+			SpriteName:       "magnet",
+			LayerName:        "base",
+			Distance:         50,
+		},
+		Icon: &SpriteData{
+			SpriteName: "icon",
+			LayerName:  "magnet",
+		},
+	}
+
 	weaponTypes[WeaponHammer] = &WeaponData{
-		name:       "Hammer",
-		Delay:      1000 * time.Millisecond,
-		MaxBullets: 1,
+		name:        "Hammer",
+		Description: "Smashes enemies to the east of player",
+		Delay:       1000 * time.Millisecond,
+		MaxBullets:  1,
 		Bullet: &bullet.BulletData{
 			BehaviorType:     bullet.BehaviorLinear,
 			SourceWeaponType: WeaponHammer,
@@ -117,17 +142,18 @@ func init() {
 	}
 
 	weaponTypes[WeaponShovel] = &WeaponData{
-		name:       "Shovel",
-		Delay:      6000 * time.Millisecond,
-		MaxBullets: 1,
+		name:        "Shovel",
+		Description: "Fires at enemies to the north",
+		Delay:       4000 * time.Millisecond,
+		MaxBullets:  1,
 		Bullet: &bullet.BulletData{
-			BehaviorType:     bullet.BehaviorLasso,
+			BehaviorType:     bullet.BehaviorUp,
 			SourceWeaponType: WeaponShovel,
 			Damage:           10,
-			IsImmortal:       true,
+			IsImmortal:       false,
 			SpriteName:       "shovel",
 			LayerName:        "base",
-			Distance:         50,
+			Distance:         25,
 			MoveSpeed:        2,
 		},
 		Icon: &SpriteData{
@@ -137,12 +163,13 @@ func init() {
 	}
 
 	weaponTypes[WeaponShuriken] = &WeaponData{
-		name:  "Shuriken",
-		Delay: 900 * time.Millisecond,
+		name:        "Shuriken",
+		Description: "Fires a wavy shuriken at enemies",
+		Delay:       900 * time.Millisecond,
 		Bullet: &bullet.BulletData{
 			BehaviorType:     bullet.BehaviorWave,
 			SourceWeaponType: WeaponShuriken,
-			Damage:           1,
+			Damage:           4,
 			SpriteName:       "arrow",
 			LayerName:        "shuriken",
 			Distance:         300,
@@ -154,28 +181,11 @@ func init() {
 		},
 	}
 
-	weaponTypes[WeaponSpear] = &WeaponData{
-		name:  "Spear",
-		Delay: 1200 * time.Millisecond,
-		Bullet: &bullet.BulletData{
-			BehaviorType:     bullet.BehaviorWave,
-			SourceWeaponType: WeaponSpear,
-			Damage:           1,
-			SpriteName:       "arrow",
-			LayerName:        "spear",
-			Distance:         300,
-			MoveSpeed:        4,
-		},
-		Icon: &SpriteData{
-			SpriteName: "arrow",
-			LayerName:  "spear",
-		},
-	}
-
 	weaponTypes[WeaponBoot] = &WeaponData{
-		name:       "Boot",
-		Delay:      9999 * time.Millisecond,
-		MaxBullets: -1,
+		name:        "Boot",
+		Description: "Increases movement speed",
+		Delay:       9999 * time.Millisecond,
+		MaxBullets:  -1,
 		Bullet: &bullet.BulletData{
 			BehaviorType:     bullet.BehaviorNone,
 			SourceWeaponType: WeaponBoot,
@@ -187,6 +197,25 @@ func init() {
 		Icon: &SpriteData{
 			SpriteName: "icon",
 			LayerName:  "boot",
+		},
+	}
+
+	weaponTypes[WeaponHeart] = &WeaponData{
+		name:        "Heart",
+		Description: "Increases maximum health",
+		Delay:       9999 * time.Millisecond,
+		MaxBullets:  -1,
+		Bullet: &bullet.BulletData{
+			BehaviorType:     bullet.BehaviorNone,
+			SourceWeaponType: WeaponHeart,
+			IsImmortal:       true,
+			SpriteName:       "heart-weapon",
+			LayerName:        "base",
+			Distance:         50,
+		},
+		Icon: &SpriteData{
+			SpriteName: "icon",
+			LayerName:  "heart",
 		},
 	}
 }

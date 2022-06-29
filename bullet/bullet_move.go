@@ -15,6 +15,8 @@ func (n *Bullet) bulletMove() {
 	n.bulletCircle()
 	n.bulletLasso()
 	n.bulletWave()
+	n.bulletUp()
+	n.bulletKnockback()
 }
 
 func (n *Bullet) bulletLinear() {
@@ -35,6 +37,13 @@ func (n *Bullet) bulletLinear() {
 	if global.IsDirectionUp(n.direction) {
 		n.y -= n.moveSpeed
 	}
+}
+
+func (n *Bullet) bulletUp() {
+	if n.behaviorType != BehaviorUp {
+		return
+	}
+	n.y -= n.moveSpeed
 }
 
 func (n *Bullet) bulletBoomerang() {
@@ -138,4 +147,11 @@ func (n *Bullet) bulletWave() {
 	}
 
 	n.rotation += increment
+}
+
+func (n *Bullet) bulletKnockback() {
+	if n.behaviorType != BehaviorKnockback {
+		return
+	}
+
 }
