@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -86,6 +87,9 @@ func Load(assetName string) error {
 		a.Player.SetVolume(global.Volume())
 		audios[baseName] = a
 	case ".wav":
+		if runtime.GOOS == "js" {
+			return nil
+		}
 		a, err := loadWav(assetName)
 		if err != nil {
 			return fmt.Errorf("loadWav: %w", err)

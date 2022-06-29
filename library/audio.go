@@ -2,6 +2,7 @@ package library
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/xackery/magnets/global"
@@ -17,6 +18,9 @@ type AudioData struct {
 }
 
 func AudioPlay(name string) error {
+	if runtime.GOOS == "js" {
+		return nil
+	}
 	a, err := Audio(name)
 	if err != nil {
 		return err
