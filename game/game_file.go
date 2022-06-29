@@ -28,7 +28,7 @@ var (
 		"rupee.aseprite",
 		"rupee.wav",
 		"shovel.aseprite",
-		"world-1.aseprite",
+		//"world-1.aseprite",
 		"magnet.aseprite",
 		"heart-weapon.aseprite",
 		"heal.wav",

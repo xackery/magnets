@@ -1,12 +1,10 @@
 package input
 
 import (
-	"os"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/rs/zerolog/log"
 	"github.com/xackery/magnets/global"
 )
 
@@ -61,10 +59,10 @@ func Update() {
 		}
 	}
 	updatePlayerDirection()
-	if IsPressed(ebiten.KeyQ) {
+	/*if IsPressed(ebiten.KeyQ) {
 		log.Info().Msgf("q pressed, quitting!")
 		os.Exit(0)
-	}
+	}*/
 }
 
 func IsPressed(key ebiten.Key) bool {

@@ -129,10 +129,10 @@ func (g *Game) start() error {
 	npc.New(npc.NpcPot, 100, 0, p)
 	npc.New(npc.NpcKnight, 120, 0, p)*/
 
-	_, err = world.New(world.WorldGrass)
+	/*_, err = world.New(world.WorldGrass)
 	if err != nil {
 		return fmt.Errorf("world.New: %w", err)
-	}
+	}*/
 
 	global.ScreenOnLayoutChange(global.ScreenWidth(), global.ScreenHeight(), true)
 	return nil

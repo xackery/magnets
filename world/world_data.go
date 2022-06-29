@@ -20,7 +20,7 @@ type SpriteData struct {
 }
 
 func init() {
-	worldTypes = make(map[int]*WorldData)
+	/*worldTypes = make(map[int]*WorldData)
 	worldTypes[WorldGrass] = &WorldData{
 		Tilemap: &SpriteData{
 			spriteName: "world-1",
@@ -31,5 +31,5 @@ func init() {
 			layerName:  "base",
 		},
 	}
-
+	*/
 }

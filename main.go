@@ -32,7 +32,7 @@ var (
 func main() {
 	var err error
 	stage := "alpha"
-	if runtime.GOOS != "windows" {
+	if runtime.GOOS != "windows" && runtime.GOOS == "js" {
 		log.Logger = log.With().Caller().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 	tag := fmt.Sprintf("%s %s", Version, BuildDate)
@@ -40,6 +40,7 @@ func main() {
 		tag = time.Now().Format("2006-01-02")
 	}
 	ebiten.SetWindowTitle(fmt.Sprintf("magnets %s %s", stage, tag))
+
 	log.Info().Msgf("starting magnets %s %s %s", stage, Version, BuildDate)
 	/*if runtime.GOOS == "js" {
 		query := js.Global().Get("window").Get("location").Get("search")

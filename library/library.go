@@ -3,11 +3,8 @@ package library
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -151,27 +148,29 @@ func SetWebAssetPath(path string) {
 }
 
 func ReadFile(assetName string) (assetReader, error) {
-	if runtime.GOOS != "js" {
-		data, err := os.ReadFile(fmt.Sprintf("art/%s", assetName))
+	//if runtime.GOOS != "js" {
+	data, err := os.ReadFile(fmt.Sprintf("art/%s", assetName))
+	if err != nil {
+		data, err = art.Art.ReadFile(assetName)
 		if err != nil {
-			data, err = art.Art.ReadFile(assetName)
-			if err != nil {
-				return nil, fmt.Errorf("readFile %s: %w", assetName, err)
-			}
+			return nil, fmt.Errorf("readFile %s: %w", assetName, err)
 		}
-		r := bytes.NewReader(data)
-		return r, nil
 	}
-	resp, err := http.Get(fmt.Sprintf("%s/art/%s", webAssetPath, assetName))
-	if err != nil {
-		return nil, fmt.Errorf("art get: %w", err)
-	}
-	defer resp.Body.Close()
-	buf := &bytes.Buffer{}
-	_, err = io.Copy(buf, resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("copy asset: %w", err)
-	}
-	r := bytes.NewReader(buf.Bytes())
+	r := bytes.NewReader(data)
 	return r, nil
+	//}
+	/*
+		resp, err := http.Get(fmt.Sprintf("%s/art/%s", webAssetPath, assetName))
+		if err != nil {
+			return nil, fmt.Errorf("art get: %w", err)
+		}
+		defer resp.Body.Close()
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("copy asset: %w", err)
+		}
+		r = bytes.NewReader(buf.Bytes())
+		return r, nil
+	*/
 }

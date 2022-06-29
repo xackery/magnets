@@ -6,3 +6,4 @@ build:
 	@go build -o bin/magnets -o bin/magnets-linux .
 webasm:
 	@GOOS=js GOARCH=wasm go build -o bin/magnets.wasm
+	@#cp $(go env GOROOT)/misc/wasm/wasm_exec.js bin/
