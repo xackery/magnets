@@ -40,10 +40,12 @@ func init() {
 	keys[ebiten.Key7] = &keyEntry{key: ebiten.Key7}
 	keys[ebiten.Key8] = &keyEntry{key: ebiten.Key8}
 	keys[ebiten.Key9] = &keyEntry{key: ebiten.Key9}
+	keys[ebiten.KeyP] = &keyEntry{key: ebiten.KeyP}
 	keys[ebiten.KeyGraveAccent] = &keyEntry{key: ebiten.KeyGraveAccent}
 }
 
 func Update() {
+
 	for _, k := range keys {
 		if k.isPressed && inpututil.IsKeyJustReleased(k.key) {
 			k.isPressed = false

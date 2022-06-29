@@ -14,6 +14,7 @@ var (
 		"frame.aseprite",
 		"gloves.aseprite",
 		"crystal.wav",
+		"levelup.aseprite",
 		"hammer.aseprite",
 		"hammer.wav",
 		"heart.aseprite",

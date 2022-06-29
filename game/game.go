@@ -9,6 +9,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/rs/zerolog/log"
 	"github.com/xackery/magnets/bullet"
 	"github.com/xackery/magnets/camera"
@@ -22,6 +23,7 @@ import (
 	"github.com/xackery/magnets/player"
 	"github.com/xackery/magnets/ui/bar"
 	"github.com/xackery/magnets/ui/equipment"
+	"github.com/xackery/magnets/ui/level"
 	"github.com/xackery/magnets/ui/life"
 	"github.com/xackery/magnets/world"
 	"golang.org/x/image/font/gofont/goregular"
@@ -45,6 +47,7 @@ type Game struct {
 	frame             int64
 	nextFrame         time.Time
 	resetGameCooldown time.Time
+	countdown         int
 }
 
 // New creates a new game instance
@@ -99,6 +102,7 @@ func New(ctx context.Context, host string) (*Game, error) {
 }
 
 func (g *Game) clear() {
+	global.SetIsPaused(false)
 	npc.Clear()
 	player.Clear()
 	world.Clear()
@@ -109,7 +113,7 @@ func (g *Game) clear() {
 }
 
 func (g *Game) start() error {
-
+	g.countdown = 600
 	_, err := player.New("hero", "base")
 	if err != nil {
 		return fmt.Errorf("player new hero: %w", err)
@@ -148,6 +152,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	bar.Draw(screen)
 	equipment.Draw(screen)
 	life.Draw(screen)
+	if global.IsLevelUp() {
+		level.Draw(screen)
+	}
+
+	g.countdownDraw(screen)
+
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f, Position: %0.2f, %0.2f, Camera: %0.2f, %0.2f", ebiten.CurrentTPS(), player.X(), player.Y(), camera.X, camera.Y), 0, global.ScreenHeight()-14)
 }
 
@@ -167,12 +177,20 @@ func (g *Game) Update() error {
 	g.frame++
 	if time.Now().After(g.nextFrame) {
 		g.nextFrame = time.Now().Add(1 * time.Second)
+		if !global.IsPaused() {
+			g.countdown--
+		}
 		g.frame = 0
 	}
 
 	ebiten.CurrentTPS()
 
+	if ebiten.IsKeyPressed(ebiten.KeyP) && time.Now().After(g.resetGameCooldown) {
+		g.resetGameCooldown = time.Now().Add(1 * time.Second)
+		global.SetIsPaused(!global.IsPaused())
+	}
 	input.Update()
+
 	if ebiten.IsKeyPressed(ebiten.KeyR) && time.Now().After(g.resetGameCooldown) {
 		g.resetGameCooldown = time.Now().Add(3 * time.Second)
 		g.clear()
@@ -183,8 +201,12 @@ func (g *Game) Update() error {
 
 		return nil
 	}
-	bullet.Update()
+
 	player.Update()
+	if global.IsPaused() {
+		return nil
+	}
+	bullet.Update()
 	item.Update()
 	if !player.IsDead() {
 		npc.Update()
@@ -196,4 +218,16 @@ func (g *Game) Update() error {
 		npc.HitUpdate()
 	}
 	return nil
+}
+
+func (g *Game) countdownDraw(screen *ebiten.Image) {
+	width := global.ScreenWidth()
+	height := 64
+	msg := fmt.Sprintf("%d", g.countdown)
+
+	bounds := text.BoundString(font.TinyFont(), msg)
+	x, y := int(width/2)-bounds.Min.X-bounds.Dx()/2, int(height/2)-bounds.Min.Y-bounds.Dy()/2
+
+	text.Draw(screen, msg, font.TinyFont(), x-1, y-1, color.Black)
+	text.Draw(screen, msg, font.TinyFont(), x, y, color.White)
 }

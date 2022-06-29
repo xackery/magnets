@@ -58,6 +58,10 @@ func main() {
 		}
 	}*/
 
+	if runtime.GOOS != "darwin" {
+		global.ScreenScaleChange(4, 4)
+	}
+
 	//clipboard.WriteAll(runtime.GOOS)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

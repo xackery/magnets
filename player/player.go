@@ -3,11 +3,13 @@ package player
 import (
 	"fmt"
 	"image/color"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/rs/zerolog/log"
 	"github.com/xackery/aseprite"
 	"github.com/xackery/magnets/camera"
@@ -17,6 +19,7 @@ import (
 	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/score"
 	"github.com/xackery/magnets/ui/bar"
+	"github.com/xackery/magnets/ui/level"
 	"github.com/xackery/magnets/ui/life"
 	"github.com/xackery/magnets/weapon"
 )
@@ -232,6 +235,9 @@ func (n *Player) animationStep() {
 	if n.IsDead() {
 		return
 	}
+	if global.IsPaused() {
+		return
+	}
 	if n.animation.delay.After(time.Now()) {
 		return
 	}
@@ -271,12 +277,54 @@ func (n *Player) animationStep() {
 
 func (n *Player) Update() {
 
+	if global.IsLevelUp() {
+		var button *level.Level
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			x, y := ebiten.CursorPosition()
+			button = level.IsHit(float64(x), float64(y))
+		}
+
+		if button == nil && input.IsPressed(ebiten.Key1) {
+			button = level.ByIndex(0)
+		}
+
+		if button == nil && input.IsPressed(ebiten.Key2) {
+			button = level.ByIndex(1)
+		}
+
+		if button == nil && input.IsPressed(ebiten.Key3) {
+			button = level.ByIndex(2)
+		}
+		if button == nil {
+			return
+		}
+		if n.hasWeapon(button.Data.Bullet.SourceWeaponType) {
+			n.weaponUpgrade(button.Data.Bullet.SourceWeaponType)
+		} else {
+			w, err := weapon.New(button.Data.Bullet.SourceWeaponType)
+			if err != nil {
+				fmt.Println("weapon new:", err)
+				os.Exit(1)
+			}
+			err = n.weaponAdd(w)
+			if err != nil {
+				log.Error().Err(err).Msgf("weaponAdd")
+			}
+		}
+
+		global.SetIsLevelUp(false)
+		global.SetIsPaused(false)
+		level.Clear()
+		return
+	}
+
 	for _, cheat := range cheats {
 		if time.Now().Before(n.weaponUpgradeCooldown) {
 			break
 		}
 
 		if input.IsPressed(cheat.key) {
+			n.addExp(50)
 			if n.hasWeapon(cheat.weapon) {
 				n.weaponUpgrade(cheat.weapon)
 			} else {
@@ -296,6 +344,9 @@ func (n *Player) Update() {
 
 	}
 
+	if global.IsPaused() {
+		return
+	}
 	isMoving := input.IsPlayerMoving()
 	moveSpeed := float64(0.5)
 	bootLvl := n.weaponLevel(weapon.WeaponBoot)
@@ -446,12 +497,7 @@ func (n *Player) addExp(value int) {
 	if n.exp >= n.maxExp() {
 		n.exp = 0
 		n.level++
-		err := library.AudioPlay("levelup")
-		n.expBar.SetText(fmt.Sprintf("%d", n.level))
-		log.Debug().Msgf("player is now level %d", n.level)
-		if err != nil {
-			log.Error().Err(err).Msgf("play levelup")
-		}
+		n.levelup()
 	}
 	log.Debug().Msgf("%0.2f %d/%d", float64(n.exp)/float64(n.maxExp()), n.exp, n.maxExp())
 	n.expBar.SetPercent(float64(n.exp) / float64(n.maxExp()))
@@ -464,4 +510,52 @@ func (n *Player) AttractionRange() float64 {
 		return dist
 	}
 	return float64(dist + float64(w.Level*10))
+}
+
+func (n *Player) levelup() {
+	var err error
+	level.Clear()
+	lastPicks := []int{}
+	for i := 0; i < 3; i++ {
+		newPick := n.randomWeaponUpgrade(lastPicks)
+		_, err = level.New(newPick)
+		if err != nil {
+			log.Error().Err(err).Msgf("level new")
+		}
+		lastPicks = append(lastPicks, newPick.Bullet.SourceWeaponType)
+	}
+	global.SetIsLevelUp(true)
+	global.SetIsPaused(true)
+	err = library.AudioPlay("levelup")
+	if err != nil {
+		log.Error().Err(err).Msgf("play levelup")
+	}
+	n.expBar.SetText(fmt.Sprintf("%d", n.level))
+	log.Debug().Msgf("player is now level %d", n.level)
+}
+
+func (n *Player) randomWeaponUpgrade(lastPicks []int) *weapon.WeaponData {
+	for i := 0; i < 30; i++ {
+		weaponType := rand.Intn(weapon.WeaponMax-1-1) + 1
+		isNew := true
+		for _, last := range lastPicks {
+			if weaponType != last {
+				continue
+			}
+			isNew = false
+			break
+		}
+		if !isNew {
+			continue
+		}
+		level := n.weaponLevel(weaponType)
+		if level >= 8 {
+			continue
+		}
+		if level > 0 {
+			return n.weapons[weaponType].Data
+		}
+		return weapon.WeaponInfo(weaponType)
+	}
+	return nil
 }

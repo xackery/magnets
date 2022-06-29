@@ -140,7 +140,7 @@ func init() {
 		name:  "Shuriken",
 		Delay: 900 * time.Millisecond,
 		Bullet: &bullet.BulletData{
-			BehaviorType:     bullet.BehaviorLinear,
+			BehaviorType:     bullet.BehaviorWave,
 			SourceWeaponType: WeaponShuriken,
 			Damage:           1,
 			SpriteName:       "arrow",
@@ -193,4 +193,8 @@ func init() {
 
 func (w *WeaponData) Name() string {
 	return w.name
+}
+
+func WeaponInfo(weaponType int) *WeaponData {
+	return weaponTypes[weaponType]
 }

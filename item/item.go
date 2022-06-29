@@ -165,6 +165,9 @@ func (n *Item) animationStep() {
 	if n.IsDead() {
 		return
 	}
+	if global.IsPaused() {
+		return
+	}
 	if n.animation.delay.After(time.Now()) {
 		return
 	}

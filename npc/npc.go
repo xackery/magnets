@@ -247,6 +247,9 @@ func (n *Npc) animationStep() {
 	if n.animation.delay.After(time.Now()) {
 		return
 	}
+	if global.IsPaused() {
+		return
+	}
 
 	if n.animation.tag.AnimationDirection == 2 && n.animation.isPingPongToggle {
 		n.animation.index--
