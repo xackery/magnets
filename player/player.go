@@ -19,6 +19,7 @@ import (
 	"github.com/xackery/magnets/library"
 	"github.com/xackery/magnets/score"
 	"github.com/xackery/magnets/ui/bar"
+	"github.com/xackery/magnets/ui/gameover"
 	"github.com/xackery/magnets/ui/level"
 	"github.com/xackery/magnets/ui/life"
 	"github.com/xackery/magnets/weapon"
@@ -86,8 +87,8 @@ func New(spriteName string, layerName string) (*Player, error) {
 	n := &Player{
 		spriteName: spriteName,
 		layerName:  layerName,
-		hp:         11,
-		maxHP:      20,
+		hp:         2,
+		maxHP:      2,
 		level:      1,
 		direction:  global.DirectionRight,
 		layer:      layer,
@@ -277,6 +278,27 @@ func (n *Player) animationStep() {
 
 func (n *Player) Update() {
 
+	if global.Countdown <= 0 {
+		gameover.Clear()
+
+		isStats := false
+		for i := 0; i < weapon.WeaponMax; i++ {
+			dmg := score.Damage(i)
+			if dmg > 0 {
+				gameover.AddText(fmt.Sprintf("%s damage: %d", weapon.Name(i), dmg))
+				gameover.AddText(fmt.Sprintf("%s kills: %d", weapon.Name(i), score.Kills(i)))
+				isStats = true
+			}
+		}
+		if !isStats {
+			gameover.AddText("No damage was done")
+		}
+
+		gameover.SetTitle("Victory!")
+		global.SetIsGameOver(true)
+		global.SetIsPaused(true)
+	}
+
 	if global.IsLevelUp() {
 		var button *level.Level
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -284,7 +306,7 @@ func (n *Player) Update() {
 			button = level.IsHit(float64(x), float64(y))
 		}
 
-		if button == nil && input.IsPressed(ebiten.Key1) {
+		/*if button == nil && input.IsPressed(ebiten.Key1) {
 			button = level.ByIndex(0)
 		}
 
@@ -294,7 +316,7 @@ func (n *Player) Update() {
 
 		if button == nil && input.IsPressed(ebiten.Key3) {
 			button = level.ByIndex(2)
-		}
+		}*/
 		if button == nil {
 			return
 		}
@@ -439,16 +461,26 @@ func (n *Player) Damage(damage int) bool {
 	}
 	if n.hp <= 0 {
 		log.Debug().Msgf("player got killed")
+		gameover.Clear()
+
+		isStats := false
 		for i := 0; i < weapon.WeaponMax; i++ {
 			dmg := score.Damage(i)
 			if dmg > 0 {
-				log.Debug().Msgf("%s damage: %d", weapon.Name(i), dmg)
-				log.Debug().Msgf("%s kills: %d", weapon.Name(i), score.Kills(i))
+				gameover.AddText(fmt.Sprintf("%s damage: %d", weapon.Name(i), dmg))
+				gameover.AddText(fmt.Sprintf("%s kills: %d", weapon.Name(i), score.Kills(i)))
+				isStats = true
 			}
 		}
+		if !isStats {
+			gameover.AddText("No damage was done")
+		}
 
+		gameover.SetTitle("Game Over")
 		n.hp = 0
 		life.SetHP(0)
+		global.SetIsGameOver(true)
+		global.SetIsPaused(true)
 		return true
 	}
 	n.invulCooldown = time.Now().Add(1 * time.Second)

@@ -8,6 +8,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/xackery/aseprite"
 	"github.com/xackery/magnets/font"
+	"github.com/xackery/magnets/global"
 	"github.com/xackery/magnets/library"
 )
 
@@ -73,6 +74,9 @@ func (n *Bar) Draw(screen *ebiten.Image) error {
 
 	text.Draw(screen, n.text, font.TinyFont(), x-1, y-1, color.Black)
 	text.Draw(screen, n.text, font.TinyFont(), x, y, color.White)
+
+	text.Draw(screen, fmt.Sprintf("%d kills", global.Kill), font.TinyFont(), 50+x-1, y+22-1, color.Black)
+	text.Draw(screen, fmt.Sprintf("%d kills", global.Kill), font.TinyFont(), 50+x, y+22, color.White)
 	return nil
 }
 

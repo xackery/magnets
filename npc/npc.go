@@ -301,7 +301,7 @@ func (n *Npc) Damage(damage int) bool {
 	n.hp -= damage
 	if n.hp < 1 {
 		n.hp = 0
-
+		global.Kill++
 		if rand.Float64() >= 0.5 {
 			_, err := item.New(item.ItemRupee, n.x, n.y)
 			if err != nil {

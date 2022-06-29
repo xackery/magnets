@@ -23,6 +23,7 @@ import (
 	"github.com/xackery/magnets/player"
 	"github.com/xackery/magnets/ui/bar"
 	"github.com/xackery/magnets/ui/equipment"
+	"github.com/xackery/magnets/ui/gameover"
 	"github.com/xackery/magnets/ui/level"
 	"github.com/xackery/magnets/ui/life"
 	"github.com/xackery/magnets/world"
@@ -47,7 +48,6 @@ type Game struct {
 	frame             int64
 	nextFrame         time.Time
 	resetGameCooldown time.Time
-	countdown         int
 }
 
 // New creates a new game instance
@@ -103,6 +103,7 @@ func New(ctx context.Context, host string) (*Game, error) {
 
 func (g *Game) clear() {
 	global.SetIsPaused(false)
+	global.Kill = 0
 	npc.Clear()
 	player.Clear()
 	world.Clear()
@@ -110,10 +111,13 @@ func (g *Game) clear() {
 	item.Clear()
 	equipment.Clear()
 	bar.Clear()
+	gameover.Clear()
+	global.SetIsGameOver(false)
+	global.SetIsLevelUp(false)
 }
 
 func (g *Game) start() error {
-	g.countdown = 600
+	global.Countdown = 600
 	_, err := player.New("hero", "base")
 	if err != nil {
 		return fmt.Errorf("player new hero: %w", err)
@@ -152,9 +156,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	bar.Draw(screen)
 	equipment.Draw(screen)
 	life.Draw(screen)
-	if global.IsLevelUp() {
-		level.Draw(screen)
-	}
+	level.Draw(screen)
+	gameover.Draw(screen)
 
 	g.countdownDraw(screen)
 
@@ -178,7 +181,7 @@ func (g *Game) Update() error {
 	if time.Now().After(g.nextFrame) {
 		g.nextFrame = time.Now().Add(1 * time.Second)
 		if !global.IsPaused() {
-			g.countdown--
+			global.Countdown--
 		}
 		g.frame = 0
 	}
@@ -223,7 +226,7 @@ func (g *Game) Update() error {
 func (g *Game) countdownDraw(screen *ebiten.Image) {
 	width := global.ScreenWidth()
 	height := 64
-	msg := fmt.Sprintf("%d", g.countdown)
+	msg := fmt.Sprintf("%d", global.Countdown)
 
 	bounds := text.BoundString(font.TinyFont(), msg)
 	x, y := int(width/2)-bounds.Min.X-bounds.Dx()/2, int(height/2)-bounds.Min.Y-bounds.Dy()/2

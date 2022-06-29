@@ -60,7 +60,7 @@ func Draw(screen *ebiten.Image) error {
 			xOffset = 0
 		}
 
-		if maxHP < i {
+		if maxHP <= i {
 			continue
 		}
 
@@ -72,7 +72,7 @@ func Draw(screen *ebiten.Image) error {
 		if hp == 0 {
 			continue
 		}
-		if hp < i {
+		if hp <= i {
 			continue
 		}
 		op.GeoM.Reset()

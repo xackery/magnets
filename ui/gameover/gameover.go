@@ -1,7 +1,6 @@
-package level
+package gameover
 
 import (
-	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -13,13 +12,12 @@ import (
 	"github.com/xackery/magnets/library"
 )
 
-const (
-	title = "Choose an upgrade"
-)
+const ()
 
 var (
-	levels     []*Level
+	title      string
 	background *aseprite.Cell
+	texts      []string
 )
 
 func loadBackground() {
@@ -37,10 +35,9 @@ func loadBackground() {
 }
 
 func Draw(screen *ebiten.Image) error {
-	if !global.IsLevelUp() {
+	if !global.IsGameOver() {
 		return nil
 	}
-	var err error
 	if background == nil {
 		loadBackground()
 	}
@@ -50,33 +47,28 @@ func Draw(screen *ebiten.Image) error {
 	//op.GeoM.Scale(global.ScreenScaleX(), global.ScreenScaleY())
 	screen.DrawImage(background.EbitenImage, op)
 
-	text.Draw(screen, title, font.TinyFont(), global.ScreenWidth()/2-1-60, 70-1, color.Black)
-	text.Draw(screen, title, font.TinyFont(), global.ScreenWidth()/2-60, 70, color.White)
+	x := global.ScreenWidth()/2 - 60
+	y := 70
+	text.Draw(screen, title, font.TinyFont(), x-1, y-1, color.Black)
+	text.Draw(screen, title, font.TinyFont(), x, y, color.White)
 
-	for i, b := range levels {
-		err = b.Draw(screen, float64(i)*64)
-		if err != nil {
-			return fmt.Errorf("draw: %w", err)
-		}
+	y += 32
+	for _, t := range texts {
+		y += 32
+		text.Draw(screen, t, font.TinyFont(), x-1, y-1, color.Black)
+		text.Draw(screen, t, font.TinyFont(), x, y, color.White)
 	}
+
 	return nil
 }
 
 func Clear() {
-	levels = []*Level{}
+	texts = []string{}
 }
 
-func IsHit(x, y float64) *Level {
-	for _, n := range levels {
-		if n.IsHit(x, y) {
-			return n
-		}
-	}
-	return nil
+func AddText(value string) {
+	texts = append(texts, value)
 }
-func ByIndex(index int) *Level {
-	if len(levels) <= index {
-		return nil
-	}
-	return levels[index]
+func SetTitle(value string) {
+	title = value + "\nPress R to restart"
 }
