@@ -129,6 +129,9 @@ func (n *Player) weaponBulletLifespan(weaponType int) time.Duration {
 	if w.WeaponType == weapon.WeaponHammer {
 		lifespan = 300 * time.Millisecond
 	}
+	if w.WeaponType == weapon.WeaponMagneticGloves {
+		lifespan = 10 * time.Millisecond
+	}
 	return lifespan
 }
 

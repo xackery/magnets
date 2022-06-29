@@ -303,28 +303,28 @@ func (n *Npc) Damage(damage int) bool {
 		n.hp = 0
 		global.Kill++
 
-		if rand.Float64() <= 0.1 {
+		if rand.Intn(100) <= 5 {
 			_, err := item.New(item.ItemHeart, n.x, n.y)
 			if err != nil {
 				log.Debug().Err(err).Msgf("item new heart")
 			}
 			return true
 		}
-		if n.maxHP > 20 && rand.Float64() <= 0.05 {
+		if n.maxHP > 20 && rand.Intn(100) <= 5 {
 			_, err := item.New(item.ItemRedRupee, n.x, n.y)
 			if err != nil {
 				log.Debug().Err(err).Msgf("item new red rupee")
 			}
 			return true
 		}
-		if n.maxHP > 20 && rand.Float64() <= 0.2 {
+		if n.maxHP > 20 && rand.Intn(100) <= 15 {
 			_, err := item.New(item.ItemGreenRupee, n.x, n.y)
 			if err != nil {
 				log.Debug().Err(err).Msgf("item new green rupee")
 			}
 			return true
 		}
-		if rand.Float64() <= 0.5 {
+		if rand.Intn(100) <= 70 {
 			_, err := item.New(item.ItemRupee, n.x, n.y)
 			if err != nil {
 				log.Debug().Err(err).Msgf("item new rupee")

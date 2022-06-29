@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/xackery/magnets/global"
+	"github.com/xackery/magnets/npc"
 )
 
 func (n *Bullet) bulletMove() {
@@ -154,4 +155,5 @@ func (n *Bullet) bulletKnockback() {
 		return
 	}
 
+	npc.Knockback(n.distance)
 }

@@ -18,7 +18,7 @@ var (
 		"hammer.aseprite",
 		"hammer.wav",
 		"heart.aseprite",
-		"hero.aseprite",
+		"player.aseprite",
 		"hit.wav",
 		"icon.aseprite",
 		"item.aseprite",
@@ -32,5 +32,6 @@ var (
 		"magnet.aseprite",
 		"heart-weapon.aseprite",
 		"heal.wav",
+		"gloves.wav",
 	}
 )

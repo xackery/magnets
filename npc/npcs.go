@@ -128,6 +128,7 @@ func HID(hid string) *Npc {
 
 func Clear() {
 	npcs = []*Npc{}
+	step = 0
 }
 
 func cleanupDead() {
@@ -159,6 +160,7 @@ func spawner() {
 	}
 
 	if global.Countdown < 500 && step == 2 {
+		spawn(NpcKnight, 1)
 		spawn(NpcBat, 20)
 		spawn(NpcCloud, 20)
 		spawn(NpcFlower, 20)
@@ -166,17 +168,65 @@ func spawner() {
 	}
 
 	if global.Countdown < 450 && step == 3 {
-		spawn(NpcKnight, 20)
-		spawn(NpcCloud, 20)
-		spawn(NpcFlower, 20)
+		spawn(NpcCloud, 10)
+		spawn(NpcFlower, 10)
 		step = 4
 	}
 
 	if global.Countdown < 400 && step == 4 {
+		spawn(NpcPot, 50)
+		step = 5
+	}
+
+	if global.Countdown < 350 && step == 5 {
+		spawn(NpcKnight, 2)
+		spawn(NpcCloud, 10)
+		spawn(NpcFlower, 10)
+		spawn(NpcPot, 10)
+		step = 6
+	}
+
+	if global.Countdown < 250 && step == 6 {
+		spawn(NpcAseprite, 3)
+		spawn(NpcPot, 20)
+		spawn(NpcFlower, 20)
+		spawn(NpcCloud, 10)
+		step = 7
+	}
+
+	if global.Countdown < 150 && step == 7 {
+		spawn(NpcAseprite, 6)
+		spawn(NpcPot, 20)
+		spawn(NpcFlower, 20)
+		spawn(NpcCloud, 10)
+		step = 8
+	}
+
+	if global.Countdown < 100 && step == 8 {
+		spawn(NpcKnight, 20)
+		step = 9
+	}
+
+	if global.Countdown < 50 && step == 9 {
 		spawn(NpcKnight, 20)
 		spawn(NpcCloud, 20)
-		spawn(Npc, 20)
-		step = 5
+		spawn(NpcFlower, 20)
+		spawn(NpcAseprite, 3)
+		spawn(NpcPot, 20)
+		spawn(NpcFlower, 20)
+		spawn(NpcCloud, 10)
+		step = 10
+	}
+
+	if global.Countdown < 20 && step == 10 {
+		spawn(NpcKnight, 20)
+		spawn(NpcCloud, 20)
+		spawn(NpcFlower, 20)
+		spawn(NpcAseprite, 3)
+		spawn(NpcPot, 20)
+		spawn(NpcFlower, 20)
+		spawn(NpcCloud, 10)
+		step = 11
 	}
 
 	/*
@@ -207,5 +257,24 @@ func spawn(npcType int, count int) {
 		theta := rand.Float64() * 6
 		distance := minDistance + (rand.Float64() * (maxDistance - minDistance))
 		New(npcType, global.Player.X()+math.Sin(theta)*distance, global.Player.Y()+math.Cos(theta)*distance, global.Player)
+	}
+}
+
+func Knockback(distance float64) {
+	for _, n := range npcs {
+		fmt.Println(global.Distance(global.Player.X(), global.Player.Y(), n.x, n.y))
+		if global.Distance(global.Player.X(), global.Player.Y(), n.x, n.y) >= 100 {
+			continue
+		}
+		if n.x > global.Player.X() {
+			n.x += distance
+		} else if n.x <= global.Player.X() {
+			n.x -= distance
+		}
+		if n.y > global.Player.Y() {
+			n.y += distance
+		} else if n.y <= global.Player.Y() {
+			n.y -= distance
+		}
 	}
 }

@@ -316,7 +316,7 @@ func (n *Player) Update() {
 			button = level.IsHit(float64(x), float64(y))
 		}
 
-		/*if button == nil && input.IsPressed(ebiten.Key1) {
+		if button == nil && input.IsPressed(ebiten.Key1) {
 			button = level.ByIndex(0)
 		}
 
@@ -326,7 +326,7 @@ func (n *Player) Update() {
 
 		if button == nil && input.IsPressed(ebiten.Key3) {
 			button = level.ByIndex(2)
-		}*/
+		}
 		if button == nil {
 			return
 		}
@@ -350,7 +350,7 @@ func (n *Player) Update() {
 		return
 	}
 
-	for _, cheat := range cheats {
+	/*for _, cheat := range cheats {
 		if time.Now().Before(n.weaponUpgradeCooldown) {
 			break
 		}
@@ -375,6 +375,7 @@ func (n *Player) Update() {
 		}
 
 	}
+	*/
 
 	if global.IsPaused() {
 		return

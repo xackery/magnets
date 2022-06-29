@@ -89,9 +89,8 @@ func init() {
 		Bullet: &bullet.BulletData{
 			BehaviorType:     bullet.BehaviorKnockback,
 			SourceWeaponType: WeaponMagneticGloves,
-			IsImmortal:       true,
 			SpriteName:       "gloves",
-			LayerName:        "gloves",
+			LayerName:        "base",
 			Distance:         50,
 		},
 		Icon: &SpriteData{

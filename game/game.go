@@ -118,7 +118,7 @@ func (g *Game) clear() {
 
 func (g *Game) start() error {
 	global.Countdown = 600
-	_, err := player.New("hero", "base")
+	_, err := player.New("player", "base")
 	if err != nil {
 		return fmt.Errorf("player new hero: %w", err)
 	}
